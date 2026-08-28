@@ -68,8 +68,8 @@
     font-family:-apple-system,BlinkMacSystemFont,Roboto,"Segoe UI",sans-serif; overflow:hidden;}
   #app{position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg); height:100vh; height:100dvh; width:100vw;}
 
-  /* AUTH OVERLAY */
-  .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  /* AUTH OVERLAY — VARSAYILAN OLARAK GİZLİ (FLICKER ENGELLEYİCİ) */
+  .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
   .auth-box { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
   .auth-box h2 { margin: 0 0 8px; text-align: center; color: var(--accent); font-size: 20px; }
   .auth-box input { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 12px; font-size: 15px; outline: none; }
@@ -307,7 +307,7 @@
     </div>
   </header>
 
-  <main id="mainArea"><div class="loading">Giriş bekleniyor...</div></main>
+  <main id="mainArea"><div class="loading">Yükleniyor...</div></main>
 
   <footer id="footer" style="display:none;">
     <div class="add-mode-row" id="addModeRow">
