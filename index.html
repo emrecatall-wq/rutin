@@ -68,7 +68,7 @@
     font-family:-apple-system,BlinkMacSystemFont,Roboto,"Segoe UI",sans-serif; overflow:hidden;}
   #app{position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg); height:100vh; height:100dvh; width:100vw;}
 
-  /* AUTH MODAL & OVERLAY */
+  /* AUTH OVERLAY */
   .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
   .auth-box { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
   .auth-box h2 { margin: 0 0 8px; text-align: center; color: var(--accent); font-size: 20px; }
@@ -372,7 +372,7 @@
     </div>
   </div>
 
-  <!-- CALCULATOR / HESAP OVERLAY -->
+  <!-- CALCULATOR OVERLAY -->
   <div id="calcOverlay" class="overlay hidden">
     <div class="overlay-header">
       <button class="close-btn" id="calcCloseBtn">‹ Geri</button>
@@ -406,46 +406,6 @@
     <div class="add-input-row" style="flex:0 0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom)); border-top:2px solid var(--line); background:var(--bg2);">
       <textarea id="newNoteInput" rows="1" placeholder="Yeni not ekle..."></textarea>
       <button id="addNoteBtn" style="flex:0 0 auto; background:var(--accent); color:#1a1005; border:none; border-radius:10px; padding:0 18px; font-size:15px; font-weight:700; min-height:44px;">Ekle</button>
-    </div>
-  </div>
-
-  <!-- ALARM EDITOR -->
-  <div id="alarmModal" class="alarm-modal hidden">
-    <div class="alarm-sheet">
-      <h3 id="alarmSheetTitle">Alarm Ayarla</h3>
-      <div class="time-row">
-        <input type="number" id="alarmHour" min="0" max="23" placeholder="SS">
-        <span>:</span>
-        <input type="number" id="alarmMinute" min="0" max="59" placeholder="DD">
-      </div>
-      <div class="sound-list" id="soundList">
-        <div class="sound-opt" data-sound="classic">
-          <input type="radio" name="soundOpt" id="s_classic" value="classic">
-          <label for="s_classic">🔔 Klasik Zil</label>
-          <button type="button" data-preview="classic">Dinle</button>
-        </div>
-        <div class="sound-opt" data-sound="soft">
-          <input type="radio" name="soundOpt" id="s_soft" value="soft">
-          <label for="s_soft">🎐 Yumuşak Ton</label>
-          <button type="button" data-preview="soft">Dinle</button>
-        </div>
-        <div class="sound-opt" data-sound="urgent">
-          <input type="radio" name="soundOpt" id="s_urgent" value="urgent">
-          <label for="s_urgent">🚨 Acil Uyarı</label>
-          <button type="button" data-preview="urgent">Dinle</button>
-        </div>
-        <div class="sound-opt" data-sound="custom">
-          <input type="radio" name="soundOpt" id="s_custom" value="custom">
-          <label for="s_custom" id="customSoundLabel">🎵 Telefon Zil Sesi / MP3 Seç</label>
-          <button type="button" id="uploadSoundBtn">Dosya Seç</button>
-          <input type="file" id="soundFile" accept="audio/*" style="display:none;">
-        </div>
-      </div>
-      <div class="alarm-actions">
-        <button class="btn-cancel" id="alarmCancelBtn">İptal</button>
-        <button class="btn-remove" id="alarmRemoveBtn" style="display:none;">Sil</button>
-        <button class="btn-save" id="alarmSaveBtn">Kaydet</button>
-      </div>
     </div>
   </div>
 
@@ -494,15 +454,7 @@
     </div>
   </div>
 
-  <!-- RINGING SCREEN -->
-  <div id="ringingModal" class="ringing-modal hidden">
-    <div class="bell">🔔</div>
-    <div class="rtitle">Hatırlatma!</div>
-    <div class="rtext" id="ringingTaskText">-</div>
-    <button id="stopRingBtn">Durdur</button>
-  </div>
-
-  <!-- CUSTOM CONFIRM -->
+  <!-- CONFIRM & EDIT MODALS -->
   <div id="confirmModal" class="alarm-modal hidden">
     <div class="alarm-sheet">
       <h3 id="confirmText" style="margin-bottom:16px;">Emin misin?</h3>
@@ -513,7 +465,6 @@
     </div>
   </div>
 
-  <!-- EDIT MODAL -->
   <div id="editRowModal" class="alarm-modal hidden">
     <div class="alarm-sheet">
       <h3 id="editRowModalTitle">Düzenle</h3>
@@ -527,12 +478,13 @@
   </div>
 </div>
 
-<!-- FIREBASE MODULES -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<!-- FIREBASE SDK (COMPAT MODULES) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
+<script>
+(function(){
   const firebaseConfig = {
     apiKey: "AIzaSyCt9sgB6vHTThSlu-KBemDkaZmlBkpi1yU",
     authDomain: "rutin-takip-1d990.firebaseapp.com",
@@ -543,17 +495,10 @@
     measurementId: "G-7RYZ6TW8PM"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-  window.fbAuth = auth;
-  window.fbDb = db;
-  window.fbMethods = { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, doc, setDoc, onSnapshot };
-</script>
-
-<script>
-(function(){
   let currentUser = null;
   let isSignUpMode = false;
   let dbUnsubscribe = null;
@@ -582,9 +527,9 @@
     try {
       authError.style.display = 'none';
       if(isSignUpMode){
-        await window.fbMethods.createUserWithEmailAndPassword(window.fbAuth, email, pass);
+        await auth.createUserWithEmailAndPassword(email, pass);
       } else {
-        await window.fbMethods.signInWithEmailAndPassword(window.fbAuth, email, pass);
+        await auth.signInWithEmailAndPassword(email, pass);
       }
     } catch(err) {
       showError('Hata: ' + (err.message.includes('auth/invalid-credential') ? 'E-posta veya şifre hatalı.' : err.message));
@@ -595,37 +540,29 @@
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
     if(confirm('Oturumu kapatmak istediğinizden emin misiniz?')){
-      window.fbMethods.signOut(window.fbAuth);
+      auth.signOut();
     }
   });
 
-  function initFirebaseAuth(){
-    const checkInterval = setInterval(() => {
-      if(window.fbAuth){
-        clearInterval(checkInterval);
-        window.fbMethods.onAuthStateChanged(window.fbAuth, (user) => {
-          if(user){
-            currentUser = user;
-            authOverlay.style.display = 'none';
-            listenToUserData();
-          } else {
-            currentUser = null;
-            authOverlay.style.display = 'flex';
-            if(dbUnsubscribe) dbUnsubscribe();
-          }
-        });
-      }
-    }, 100);
-  }
+  auth.onAuthStateChanged((user) => {
+    if(user){
+      currentUser = user;
+      authOverlay.style.display = 'none';
+      listenToUserData();
+    } else {
+      currentUser = null;
+      authOverlay.style.display = 'flex';
+      if(dbUnsubscribe) dbUnsubscribe();
+    }
+  });
 
-  // CANLI VERİTABANI DİNLEME (FIRESTORE SYNC)
   let cloudState = { templates: [], notes: [], agendaList: [], calcList: [], stats: {}, records: {}, customTasks: {} };
 
   function listenToUserData(){
     if(!currentUser) return;
-    const userDocRef = window.fbMethods.doc(window.fbDb, "users", currentUser.uid);
-    dbUnsubscribe = window.fbMethods.onSnapshot(userDocRef, (docSnap) => {
-      if(docSnap.exists()){
+    const userDocRef = db.collection("users").doc(currentUser.uid);
+    dbUnsubscribe = userDocRef.onSnapshot((docSnap) => {
+      if(docSnap.exists){
         const data = docSnap.data();
         if(data[activeProfile]){
           const profData = data[activeProfile];
@@ -641,12 +578,12 @@
       } else {
         syncToCloud();
       }
-    });
+    }, (err) => { console.error("Firestore error:", err); });
   }
 
   async function syncToCloud(){
     if(!currentUser) return;
-    const userDocRef = window.fbMethods.doc(window.fbDb, "users", currentUser.uid);
+    const userDocRef = db.collection("users").doc(currentUser.uid);
     const payload = {};
     payload[activeProfile] = {
       templates,
@@ -657,7 +594,7 @@
       records: cloudState.records,
       customTasks: cloudState.customTasks
     };
-    await window.fbMethods.setDoc(userDocRef, payload, { merge: true });
+    await userDocRef.set(payload, { merge: true });
   }
 
   function renderCurrentScreen(){
@@ -665,7 +602,6 @@
     goToDate(currentDate);
   }
 
-  // UYGULAMA MEVCUT DEĞİŞKENLERİ
   const mainArea = document.getElementById('mainArea');
   const footer = document.getElementById('footer');
   const lockedNote = document.getElementById('lockedNote');
@@ -731,7 +667,6 @@
   let selectedWeekday = new Date().getDay();
   let stats = {};
   let calViewYear, calViewMonth;
-  let auto3Alarms = false;
 
   let activeProfile = 'emre';
   const PROFILES = [
@@ -893,10 +828,10 @@
     templates.filter(t => taskAppliesToDate(t, dObj)).forEach(t => {
       const type = t.type || 'daily';
       items.push({kind:'template', id:t.id, text:t.text, subtitle: recurrenceSuffix(t).replace(/^ · /,''), rawText:t.text,
-        tplType:type, priority: PRIORITY[type], done: !!currentRecord[t.id], editable: isToday(), alarm: t.alarm || null});
+        tplType:type, priority: PRIORITY[type], done: !!currentRecord[t.id], editable: isToday()});
     });
     customTasks.forEach(c => items.push({kind:'custom', id:c.id, text:c.text, subtitle:'Bu güne özel', rawText:c.text,
-      priority: PRIORITY.custom, done: !!c.done, editable: true, alarm: c.alarm || null}));
+      priority: PRIORITY.custom, done: !!c.done, editable: true}));
 
     if(items.length === 0){
       const emptyMsg = document.createElement('div');
@@ -1259,12 +1194,9 @@
     listenToUserData();
   });
 
-  (async function init(){
-    updateProfileUI();
-    initFirebaseAuth();
-  })();
+  updateProfileUI();
 
-  if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=3').catch(()=>{})); }
+  if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
 })();
 </script>
 </body>
