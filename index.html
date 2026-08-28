@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1b2b">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Günlük Görevler</title>
+<style>
+  :root{
+    --bg:#0f1b2b;
+    --bg2:#132540;
+    --line:#2a4468;
+    --accent:#ff8c1a;
+    --accent-dim:#5a4326;
+    --text:#eaf1fb;
+    --text-dim:#7f93b3;
+    --done:#2e7d4f;
+    --danger:#c0392b;
+    --partial:#c98a1e;
+    --custom:#3d8bfd;
+    --custom-dim:#1c3a63;
+  }
+  html[data-theme="light"]{
+    --bg:#f3f4f7; --bg2:#ffffff; --line:#dde1e8;
+    --accent:#e0700e; --accent-dim:#ffe1bd;
+    --text:#1b2433; --text-dim:#68738a;
+    --done:#2e7d4f; --danger:#c0392b; --partial:#c98a1e;
+    --custom:#2f6fe0; --custom-dim:#dceaff;
+  }
+  html[data-theme="green"]{
+    --bg:#0e1c14; --bg2:#13291d; --line:#25462f;
+    --accent:#3fcf7f; --accent-dim:#1f4a30;
+    --text:#e9f6ee; --text-dim:#82a691;
+    --done:#3fcf7f; --danger:#e05a4e; --partial:#d6a13a;
+    --custom:#4aa8ff; --custom-dim:#1c3a5c;
+  }
+  html[data-theme="amber"]{
+    --bg:#201510; --bg2:#2b1d15; --line:#4d3826;
+    --accent:#f0954a; --accent-dim:#5a3d1f;
+    --text:#f7ece0; --text-dim:#ab8f77;
+    --done:#4caf6f; --danger:#e0655a; --partial:#e0b04a;
+    --custom:#5aa9f0; --custom-dim:#2a3d55;
+  }
+  html[data-theme="graylight"]{
+    --bg:#e9eaec; --bg2:#f6f6f7; --line:#d3d5d9;
+    --accent:#5a6472; --accent-dim:#dcdfe3;
+    --text:#26292e; --text-dim:#6b7078;
+    --done:#2e7d4f; --danger:#c0392b; --partial:#b5872a;
+    --custom:#2f6fe0; --custom-dim:#dbe3f2;
+  }
+  html[data-theme="sepia"]{
+    --bg:#ece0c8; --bg2:#f5ecd8; --line:#d8c7a2;
+    --accent:#8a5a2e; --accent-dim:#e6d3ac;
+    --text:#3a2e1d; --text-dim:#7a6a4e;
+    --done:#4c7a4a; --danger:#a4432f; --partial:#a37a2c;
+    --custom:#5678a6; --custom-dim:#dbe0d0;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100vh; height:100dvh; width:100vw; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,Roboto,"Segoe UI",sans-serif; overflow:hidden;}
+  #app{position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg); height:100vh; height:100dvh; width:100vw;}
+
+  header{flex:0 0 auto; background:var(--bg2); border-bottom:2px solid var(--line);
+    padding:10px 8px 8px; padding-top:calc(10px + env(safe-area-inset-top));}
+  .top-row{display:flex; align-items:center; justify-content:space-between; gap:3px;}
+  .icon-btn{background:var(--line); border:none; color:var(--text); width:36px; height:36px;
+    border-radius:10px; font-size:15px; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .icon-btn:active{background:var(--accent-dim);}
+  .date-display{flex:1; text-align:center; display:flex; flex-direction:column; align-items:center;}
+  .date-display .weekday{font-size:9px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase;}
+  .date-display .fulldate{font-size:13px; font-weight:600;}
+  .date-display .today-badge{font-size:8px; color:var(--accent); font-weight:700; letter-spacing:1px; margin-top:1px; visibility:hidden;}
+  .profile-pill{background:var(--custom-dim); color:var(--custom); border:none; border-radius:10px;
+    font-size:9px; font-weight:700; padding:2px 6px; margin-bottom:2px;}
+
+  .progress-wrap{margin-top:8px; height:6px; background:var(--line); border-radius:4px; overflow:hidden;}
+  .progress-bar{height:100%; background:var(--accent); width:0%; transition:width .25s ease;}
+  .progress-label{font-size:11px; color:var(--text-dim); margin-top:5px; text-align:center; display:flex; justify-content:center; gap:14px;}
+  .progress-label b{color:var(--text); font-weight:700;}
+  .pl-done b{color:var(--done);}
+  .pl-missing b{color:var(--danger);}
+
+  main{flex:1 1 auto; overflow-y:auto; padding:10px 12px 12px; -webkit-overflow-scrolling:touch;}
+  .section-label{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin:14px 4px 6px;}
+  .task-row{display:flex; align-items:center; gap:10px; background:var(--bg2); border:1px solid var(--line);
+    border-left:4px solid var(--accent); border-radius:10px; padding:12px 10px; margin-bottom:8px;
+    transition:all .2s ease;}
+  .task-row.done{border-left-color:var(--done) !important; opacity:.55; background:var(--bg2) !important; box-shadow:none !important;}
+  .task-row.readonly{opacity:.75;}
+
+  .task-row.highlight{
+    border-left-width:6px !important; border-left-color:var(--accent) !important;
+    background:linear-gradient(90deg, var(--accent-dim) 0%, var(--bg2) 80%) !important;
+  }
+  .task-row.custom{
+    border-left-width:6px !important; border-left-color:var(--custom) !important;
+    background:linear-gradient(90deg, var(--custom-dim) 0%, var(--bg2) 80%) !important;
+  }
+
+  .row-alarm-btn{flex:0 0 auto; width:32px; height:32px; border-radius:8px; border:none;
+    background:transparent; color:var(--text-dim); font-size:16px; opacity:.5;
+    border-right:1px solid var(--line); margin-right:2px; padding-right:8px;}
+  .row-alarm-btn.is-active{opacity:1; color:var(--accent);}
+  .row-alarm-btn.is-empty{opacity:.25;}
+  .check-btn{flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:2px solid var(--line);
+    background:transparent; display:flex; align-items:center; justify-content:center; color:var(--done);
+    font-size:16px; font-weight:bold;}
+  .task-row.done .check-btn{background:var(--done); border-color:var(--done); color:#fff;}
+  .task-text{flex:1; font-size:15px; line-height:1.3; min-width:0;}
+  .task-text-main{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;}
+  .task-text-sub{font-size:11px; color:var(--text-dim); margin-top:3px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .task-row.done .task-text{text-decoration:line-through; color:var(--text-dim);}
+  .del-btn, .edit-btn{flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:none; background:transparent;
+    color:var(--text-dim); font-size:16px;}
+  .cal-scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  
+  .alarm-modal{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:80; display:flex;
+    align-items:flex-end; justify-content:center;}
+  .alarm-modal.hidden{display:none;}
+  .alarm-sheet{background:var(--bg2); width:100%; max-width:480px; border-radius:16px 16px 0 0;
+    padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;}
+  .alarm-sheet h3{margin:0 0 12px; font-size:16px;}
+  .alarm-actions{display:flex; gap:8px;}
+  .alarm-actions button{flex:1; border:none; border-radius:10px; padding:12px 0; font-size:14px; font-weight:700;}
+  .btn-save{background:var(--accent); color:#1a1005;}
+  .btn-remove{background:var(--danger); color:#fff;}
+  .btn-cancel{background:var(--line); color:var(--text);}
+  .time-row{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px;}
+  .time-row input{width:70px; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:12px; font-size:22px; text-align:center; outline:none;}
+  .time-row span{font-size:22px; color:var(--text-dim);}
+  .sound-list{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
+  .sound-opt{display:flex; align-items:center; gap:10px; background:var(--bg); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px;}
+  .sound-opt.sel{border-color:var(--accent); background:var(--accent-dim);}
+  .sound-opt input{margin:0;}
+  .sound-opt label{flex:1; font-size:14px;}
+  .sound-opt button{background:var(--line); border:none; color:var(--text); border-radius:8px; padding:6px 10px; font-size:12px;}
+
+  .ringing-modal{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px; text-align:center; padding:20px;}
+  .ringing-modal.hidden{display:none;}
+  .ringing-modal .bell{font-size:60px; animation:ring 0.4s infinite;}
+  @keyframes ring{0%{transform:rotate(0);}25%{transform:rotate(15deg);}75%{transform:rotate(-15deg);}100%{transform:rotate(0);}}
+  .ringing-modal .rtitle{font-size:20px; font-weight:700; color:var(--accent);}
+  .ringing-modal .rtext{font-size:16px; color:var(--text);}
+  .ringing-modal button{background:var(--danger); color:#fff; border:none; border-radius:14px;
+    padding:16px 34px; font-size:16px; font-weight:700;}
+  .empty-msg{text-align:center; color:var(--text-dim); font-size:14px; margin-top:40px; padding:0 20px;}
+
+  footer{flex:0 0 auto; background:var(--bg2); border-top:2px solid var(--line); padding:10px 12px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; flex-direction:column;}
+  .add-mode-row{display:flex; gap:8px; margin-bottom:8px;}
+  #recurrenceSelect{width:100%; background:var(--line); border:none; color:var(--text); border-radius:8px;
+    padding:10px 8px; font-size:13px; font-weight:600;}
+  .recurrence-extra{margin-bottom:8px;}
+  .weekday-row{display:flex; gap:4px;}
+  .weekday-row button{flex:1; background:var(--line); border:none; color:var(--text-dim); border-radius:8px;
+    padding:8px 0; font-size:12px; font-weight:600;}
+  .weekday-row button.sel{background:var(--custom); color:#fff;}
+  #monthDayInput{width:100%; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:10px; font-size:14px; outline:none;}
+  .add-input-row{display:flex; gap:8px; align-items:flex-end;}
+  footer input{flex:1; background:var(--bg); border:1px solid var(--line); color:var(--text); border-radius:10px;
+    padding:12px 12px; font-size:15px; outline:none;}
+  footer textarea, .add-input-row textarea{flex:1; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:12px 12px; font-size:15px; outline:none; resize:none; font-family:inherit;
+    line-height:1.35; max-height:120px; overflow-y:auto;}
+  footer button#addBtn{flex:0 0 auto; background:var(--accent); color:#1a1005; border:none; border-radius:10px;
+    padding:0 18px; font-size:15px; font-weight:700; align-self:stretch; min-height:44px;}
+  .locked-note{text-align:center; color:var(--text-dim); font-size:12px; padding:8px 10px 10px;}
+  .tag-recurring{color:var(--text-dim); font-size:11px; margin-right:4px;}
+  .tag-custom{color:var(--custom); font-size:11px; margin-right:4px; font-weight:700;}
+  .loading{display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-dim); font-size:14px;}
+
+  /* DİNAMİK MOBİL VE TABLET PENCERE DÜZENLERİ (TAM EKRAN UYUMLU) */
+  .overlay{position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; background:var(--bg); z-index:50; display:flex; flex-direction:column; overflow:hidden;}
+  .overlay.hidden{display:none;}
+  .overlay-header{flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--bg2); border-bottom:2px solid var(--line); padding:12px 10px;
+    padding-top:calc(12px + env(safe-area-inset-top));}
+  .overlay-title{flex:1; text-align:center; font-size:16px; font-weight:700;}
+  .close-btn{background:var(--line); border:none; color:var(--text); border-radius:10px; padding:10px 14px; font-size:14px;}
+  .nav-btn{background:var(--line); border:none; color:var(--text); width:42px; height:42px; border-radius:10px; font-size:20px;}
+
+  .cal-weekdays{display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px;
+    color:var(--text-dim); padding:10px 6px 0; letter-spacing:.5px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:8px;}
+  .cal-cell{position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    background:var(--bg2); border:1px solid var(--line); border-radius:10px; font-size:14px; color:var(--text);}
+  .cal-cell.empty{background:transparent; border:none;}
+  .cal-cell.today{border-color:var(--accent); border-width:2px;}
+  .cal-cell.selected{background:var(--accent-dim); border-color:var(--accent);}
+
+  .stats-list{flex:1 1 auto; overflow-y:auto; padding:12px; -webkit-overflow-scrolling:touch;}
+  
+  .backup-row{flex:0 0 auto; display:flex; flex-direction:column; gap:8px; padding:12px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);}
+  .backup-btn-group{display:flex; gap:8px;}
+  .backup-btn{flex:1; background:var(--line); color:var(--text); border:none; border-radius:10px;
+    padding:12px 8px; font-size:13px; font-weight:600;}
+  .backup-btn.excel-btn{background:var(--done); color:#fff;}
+  .backup-btn:active{background:var(--accent-dim);}
+  
+  .theme-section{padding:12px; border-top:1px solid var(--line);}
+  .theme-section h4{margin:0 0 10px; font-size:14px; color:var(--text-dim); text-align:center;}
+  .theme-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+  .theme-swatch{display:flex; align-items:center; gap:8px; border:2px solid var(--line); border-radius:10px;
+    padding:10px; background:var(--bg2);}
+  .theme-swatch.sel{border-color:var(--accent);}
+  .theme-swatch .sw-dot{width:20px; height:20px; border-radius:50%; flex:0 0 auto; border:1px solid rgba(255,255,255,0.2);}
+  .theme-swatch .sw-label{font-size:13px; color:var(--text);}
+  
+  .auto-alarm-box{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:12px; margin:12px; display:flex; flex-direction:column; gap:10px;}
+  .auto-alarm-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .auto-alarm-info{font-size:13px; color:var(--text);}
+  .auto-alarm-info small{display:block; color:var(--text-dim); font-size:11px; margin-top:2px;}
+  .auto-alarm-times-row{display:flex; gap:8px;}
+  .auto-alarm-time-input{flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:8px 4px; font-size:14px; text-align:center; outline:none;}
+
+  .stat-row-item{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px;}
+  .stat-row-top{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;}
+  .stat-row-text{font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .stat-row-ratio{font-size:13px; font-weight:700; color:var(--accent); flex:0 0 auto;}
+  .stat-row-barbg{height:6px; background:var(--line); border-radius:4px; overflow:hidden;}
+  .stat-row-barfill{height:100%; background:var(--accent);}
+  .switch{position:relative; display:inline-block; width:44px; height:24px;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; cursor:pointer; inset:0; background-color:var(--line); transition:.3s; border-radius:24px;}
+  .slider:before{position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%;}
+  input:checked + .slider{background-color:var(--accent);}
+  input:checked + .slider:before{transform:translateX(20px);}
+
+  /* AJANDA VE HESAP SATIR DÜZENLERİ */
+  .agenda-row-item{display:grid; grid-template-columns:80px 1fr auto; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px;}
+  .agenda-col-date{font-size:11px; color:var(--accent); font-weight:700;}
+  .agenda-col-desc{font-size:14px; font-weight:500; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .agenda-col-right{display:flex; align-items:center; gap:4px;}
+
+  .calc-header-card{background:var(--bg2); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:10px;
+    padding:8px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .calc-header-card .chc-label{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px;}
+  .calc-total-val{font-size:17px; font-weight:800; color:var(--accent); margin:0;}
+  .calc-row-item{display:grid; grid-template-columns:80px 1fr auto; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px;}
+  .calc-col-date{font-size:11px; color:var(--text-dim); font-weight:600;}
+  .calc-col-desc{font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; cursor:pointer;}
+  .calc-col-right{display:flex; align-items:center; gap:6px;}
+  .calc-val-badge{font-size:14px; font-weight:700; padding:4px 8px; border-radius:6px; white-space:nowrap;}
+  .calc-val-badge.plus{color:#fff; background:var(--done);}
+  .calc-val-badge.minus{color:#fff; background:var(--danger);}
+
+  /* TABLET GENİŞ EKRAN UYARLAMALARI (768px UZERİ) */
+  @media(min-width:768px){
+    #app, .alarm-sheet{max-width:720px; margin:0 auto; left:50%; transform:translateX(-50%);}
+    .overlay{max-width:720px; left:50%; transform:translateX(-50%);}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="top-row">
+      <button class="icon-btn" id="calendarBtn" title="Takvim">📅</button>
+      <button class="icon-btn" id="agendaBtn" title="Günlük Ajanda">📖</button>
+      <button class="icon-btn" id="notesBtn" title="Sürekli Notlar">📝</button>
+      <div class="date-display" id="dateDisplay">
+        <button class="profile-pill" id="profileBtn" title="Hesap değiştir">👤 Emre</button>
+        <div class="weekday" id="weekdayLbl">-</div>
+        <div class="fulldate" id="fulldateLbl">-</div>
+        <div class="today-badge" id="todayBadge">BUGÜN</div>
+      </div>
+      <button class="icon-btn" id="statsBtn" title="Verilerim">📊</button>
+      <button class="icon-btn" id="calcBtn" title="Günlük Hesap">💳</button>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-label">
+      <span class="pl-done">Tamamlanan: <b id="doneCountLbl">0</b></span>
+      <span class="pl-missing">Eksik: <b id="missingCountLbl">0</b></span>
+    </div>
+  </header>
+
+  <main id="mainArea"><div class="loading">Yükleniyor...</div></main>
+
+  <footer id="footer" style="display:none;">
+    <div class="add-mode-row" id="addModeRow">
+      <select id="recurrenceSelect">
+        <option value="custom">📌 Sadece bu güne özel</option>
+        <option value="daily" selected>🔁 Her gün tekrarla</option>
+        <option value="weekly">📆 Her hafta tekrarla</option>
+        <option value="monthly">📅 Her ayın belirli gününde</option>
+        <option value="note">📝 Sürekli Not (tarihe bağlı değil)</option>
+      </select>
+    </div>
+    <div class="recurrence-extra" id="weeklyExtra" style="display:none;">
+      <div class="weekday-row" id="weekdayRow">
+        <button type="button" data-wd="1">Pzt</button>
+        <button type="button" data-wd="2">Sal</button>
+        <button type="button" data-wd="3">Çar</button>
+        <button type="button" data-wd="4">Per</button>
+        <button type="button" data-wd="5">Cum</button>
+        <button type="button" data-wd="6">Cmt</button>
+        <button type="button" data-wd="0">Paz</button>
+      </div>
+    </div>
+    <div class="recurrence-extra" id="monthlyExtra" style="display:none;">
+      <input type="number" id="monthDayInput" min="1" max="31" placeholder="Ayın kaçıncı günü (1-31)">
+    </div>
+    <div class="add-input-row">
+      <textarea id="newTaskInput" rows="1" placeholder="Yeni görev ekle..."></textarea>
+      <button id="addBtn">Ekle</button>
+    </div>
+  </footer>
+  <div class="locked-note" id="lockedNote" style="display:none;">
+    🔁 Tekrarlanan görevler yalnızca bugünden eklenip işaretlenebilir. Bu tarihe özel görev eklemek serbest.
+  </div>
+
+  <!-- CALENDAR OVERLAY -->
+  <div id="calendarOverlay" class="overlay hidden">
+    <div class="overlay-header">
+      <button class="nav-btn" id="calPrevMonth">‹</button>
+      <div class="overlay-title" id="calMonthLabel">-</div>
+      <button class="nav-btn" id="calNextMonth">›</button>
+    </div>
+    <div style="text-align:center;padding:8px;">
+      <button class="close-btn" id="calCloseBtn">Kapat</button>
+    </div>
+    <div class="cal-scroll">
+      <div class="cal-weekdays"><span>Pzt</span><span>Sal</span><span>Çar</span><span>Per</span><span>Cum</span><span>Cmt</span><span>Paz</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- AGENDA OVERLAY -->
+  <div id="agendaOverlay" class="overlay hidden">
+    <div class="overlay-header">
+      <button class="close-btn" id="agendaCloseBtn">‹ Geri</button>
+      <div class="overlay-title">📖 Günlük Ajanda</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="stats-list" id="agendaList"></div>
+    <div class="add-input-row" style="flex:0 0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom)); border-top:2px solid var(--line); background:var(--bg2);">
+      <textarea id="newAgendaInput" rows="1" placeholder="Ajandaya yeni not / yapılan iş ekle..."></textarea>
+      <button id="addAgendaBtn" style="flex:0 0 auto; background:var(--accent); color:#1a1005; border:none; border-radius:10px; padding:0 18px; font-size:15px; font-weight:700; min-height:44px;">Ekle</button>
+    </div>
+  </div>
+
+  <!-- CALCULATOR / HESAP OVERLAY -->
+  <div id="calcOverlay" class="overlay hidden">
+    <div class="overlay-header">
+      <button class="close-btn" id="calcCloseBtn">‹ Geri</button>
+      <div class="overlay-title">💳 Günlük Hesap / Gelir-Gider</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="stats-list">
+      <div class="calc-header-card">
+        <div class="chc-label">Toplam Net Bakiye</div>
+        <div class="calc-total-val" id="calcTotalVal">0 TL</div>
+      </div>
+      <div id="calcList"></div>
+    </div>
+    <div style="flex:0 0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom)); border-top:2px solid var(--line); background:var(--bg2); display:flex; flex-direction:column; gap:8px;">
+      <input type="text" id="calcDescInput" placeholder="Açıklama (Örn: Malzeme alımı)" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:12px; font-size:14px; outline:none;">
+      <div style="display:flex; gap:8px;">
+        <input type="number" id="calcAmountInput" placeholder="Tutar (+ / -)" style="flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:12px; font-size:14px; outline:none;">
+        <button id="addCalcBtn" style="flex:0 0 auto; background:var(--accent); color:#1a1005; border:none; border-radius:10px; padding:0 20px; font-size:15px; font-weight:700; min-height:44px;">Ekle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES OVERLAY -->
+  <div id="notesOverlay" class="overlay hidden">
+    <div class="overlay-header">
+      <button class="close-btn" id="notesCloseBtn">‹ Geri</button>
+      <div class="overlay-title">📝 Sürekli Notlar</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="stats-list" id="notesList"></div>
+    <div class="add-input-row" style="flex:0 0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom)); border-top:2px solid var(--line); background:var(--bg2);">
+      <textarea id="newNoteInput" rows="1" placeholder="Yeni not ekle..."></textarea>
+      <button id="addNoteBtn" style="flex:0 0 auto; background:var(--accent); color:#1a1005; border:none; border-radius:10px; padding:0 18px; font-size:15px; font-weight:700; min-height:44px;">Ekle</button>
+    </div>
+  </div>
+
+  <!-- ALARM EDITOR -->
+  <div id="alarmModal" class="alarm-modal hidden">
+    <div class="alarm-sheet">
+      <h3 id="alarmSheetTitle">Alarm Ayarla</h3>
+      <div class="time-row">
+        <input type="number" id="alarmHour" min="0" max="23" placeholder="SS">
+        <span>:</span>
+        <input type="number" id="alarmMinute" min="0" max="59" placeholder="DD">
+      </div>
+      <div class="sound-list" id="soundList">
+        <div class="sound-opt" data-sound="classic">
+          <input type="radio" name="soundOpt" id="s_classic" value="classic">
+          <label for="s_classic">🔔 Klasik Zil</label>
+          <button type="button" data-preview="classic">Dinle</button>
+        </div>
+        <div class="sound-opt" data-sound="soft">
+          <input type="radio" name="soundOpt" id="s_soft" value="soft">
+          <label for="s_soft">🎐 Yumuşak Ton</label>
+          <button type="button" data-preview="soft">Dinle</button>
+        </div>
+        <div class="sound-opt" data-sound="urgent">
+          <input type="radio" name="soundOpt" id="s_urgent" value="urgent">
+          <label for="s_urgent">🚨 Acil Uyarı</label>
+          <button type="button" data-preview="urgent">Dinle</button>
+        </div>
+        <div class="sound-opt" data-sound="custom">
+          <input type="radio" name="soundOpt" id="s_custom" value="custom">
+          <label for="s_custom" id="customSoundLabel">🎵 Telefon Zil Sesi / MP3 Seç</label>
+          <button type="button" id="uploadSoundBtn">Dosya Seç</button>
+          <input type="file" id="soundFile" accept="audio/*" style="display:none;">
+        </div>
+      </div>
+      <div class="alarm-actions">
+        <button class="btn-cancel" id="alarmCancelBtn">İptal</button>
+        <button class="btn-remove" id="alarmRemoveBtn" style="display:none;">Sil</button>
+        <button class="btn-save" id="alarmSaveBtn">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS OVERLAY -->
+  <div id="statsOverlay" class="overlay hidden">
+    <div class="overlay-header">
+      <button class="close-btn" id="statsCloseBtn">‹ Geri</button>
+      <div class="overlay-title">Verilerim ve Ayarlar</div>
+      <div style="width:60px;"></div>
+    </div>
+    
+    <div class="auto-alarm-box">
+      <div class="auto-alarm-top">
+        <div class="auto-alarm-info">
+          ⏰ Günde 3 Defa Hatırlat
+          <small>Aşağıdaki saatlerde otomatik çalar</small>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="threeAlarmsToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="auto-alarm-times-row">
+        <input type="time" id="autoAlarmTime0" class="auto-alarm-time-input" value="08:00">
+        <input type="time" id="autoAlarmTime1" class="auto-alarm-time-input" value="15:00">
+        <input type="time" id="autoAlarmTime2" class="auto-alarm-time-input" value="22:00">
+      </div>
+    </div>
+
+    <div class="section-label" style="margin:4px 12px 0;">Rutin Takip Oranları (başladığın günden bugüne)</div>
+    <div class="stats-list" id="statsList"></div>
+    <div class="theme-section">
+      <h4>🎨 Tema</h4>
+      <div class="theme-grid" id="themeGrid">
+        <button class="theme-swatch" data-theme="dark"><span class="sw-dot" style="background:#132540;"></span><span class="sw-label">🌙 Koyu Mavi</span></button>
+        <button class="theme-swatch" data-theme="light"><span class="sw-dot" style="background:#ffffff;border:1px solid #ccc;"></span><span class="sw-label">☀️ Açık</span></button>
+        <button class="theme-swatch" data-theme="green"><span class="sw-dot" style="background:#13291d;"></span><span class="sw-label">🌲 Orman</span></button>
+        <button class="theme-swatch" data-theme="amber"><span class="sw-dot" style="background:#2b1d15;"></span><span class="sw-label">☕ Kahve</span></button>
+        <button class="theme-swatch" data-theme="graylight"><span class="sw-dot" style="background:#f6f6f7;border:1px solid #ccc;"></span><span class="sw-label">⚪ Açık Gri</span></button>
+        <button class="theme-swatch" data-theme="sepia"><span class="sw-dot" style="background:#f5ecd8;border:1px solid #ccc;"></span><span class="sw-label">📖 Sepya</span></button>
+      </div>
+    </div>
+    <div class="backup-row">
+      <button class="backup-btn excel-btn" id="exportExcelBtn">📊 Excel / E-Tablo Aktar</button>
+      <div class="backup-btn-group">
+        <button class="backup-btn" id="exportBtn">⬇ JSON Yedek Al</button>
+        <button class="backup-btn" id="importBtn">⬆ Yedek Yükle</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+  </div>
+
+  <!-- RINGING SCREEN -->
+  <div id="ringingModal" class="ringing-modal hidden">
+    <div class="bell">🔔</div>
+    <div class="rtitle">Hatırlatma!</div>
+    <div class="rtext" id="ringingTaskText">-</div>
+    <button id="stopRingBtn">Durdur</button>
+  </div>
+
+  <!-- CUSTOM CONFIRM -->
+  <div id="confirmModal" class="alarm-modal hidden">
+    <div class="alarm-sheet">
+      <h3 id="confirmText" style="margin-bottom:16px;">Emin misin?</h3>
+      <div class="alarm-actions">
+        <button class="btn-cancel" id="confirmNoBtn">Vazgeç</button>
+        <button class="btn-remove" id="confirmYesBtn">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- İÇERİK GÖRÜNTÜLE / DÜZENLE / SİL MODALİ (görevler, ajanda, notlar, hesap için ortak) -->
+  <div id="editRowModal" class="alarm-modal hidden">
+    <div class="alarm-sheet">
+      <h3 id="editRowModalTitle">Düzenle</h3>
+      <textarea id="editRowInput" style="width:100%; min-height:80px; background:var(--bg); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:12px; font-size:15px; outline:none; margin-bottom:12px; resize:vertical; overflow-y:hidden; font-family:inherit; line-height:1.4;"></textarea>
+      <div class="alarm-actions">
+        <button class="btn-cancel" id="editRowCancelBtn">İptal</button>
+        <button class="btn-remove" id="editRowDeleteBtn">Sil</button>
+        <button class="btn-save" id="editRowSaveBtn">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const mainArea = document.getElementById('mainArea');
+  const footer = document.getElementById('footer');
+  const lockedNote = document.getElementById('lockedNote');
+  const weekdayLbl = document.getElementById('weekdayLbl');
+  const fulldateLbl = document.getElementById('fulldateLbl');
+  const todayBadge = document.getElementById('todayBadge');
+  const progressBar = document.getElementById('progressBar');
+  const doneCountLbl = document.getElementById('doneCountLbl');
+  const missingCountLbl = document.getElementById('missingCountLbl');
+  const newTaskInput = document.getElementById('newTaskInput');
+  const addBtn = document.getElementById('addBtn');
+  const addModeRow = document.getElementById('addModeRow');
+  const recurrenceSelect = document.getElementById('recurrenceSelect');
+  const weeklyExtra = document.getElementById('weeklyExtra');
+  const monthlyExtra = document.getElementById('monthlyExtra');
+  const weekdayRow = document.getElementById('weekdayRow');
+  const monthDayInput = document.getElementById('monthDayInput');
+
+  const calendarOverlay = document.getElementById('calendarOverlay');
+  const calGrid = document.getElementById('calGrid');
+  const calMonthLabel = document.getElementById('calMonthLabel');
+  const statsOverlay = document.getElementById('statsOverlay');
+  const statsList = document.getElementById('statsList');
+
+  const DAYS_TR = ['PAZAR','PAZARTESİ','SALI','ÇARŞAMBA','PERŞEMBE','CUMA','CUMARTESİ'];
+  const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+  function fmt(d){
+    const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,'0'); const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function todayStr(){ return fmt(new Date()); }
+
+  // Metin girilen kutular istediğiniz kadar uzun metin alabilsin diye otomatik büyüyen textarea davranışı
+  function autoGrow(el){
+    if(!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+  // Düzenleme/görüntüleme sayfası için üst sınır yok — metin tamamen açılsın, kaydırmaya gerek kalmasın
+  function autoGrowFull(el){
+    if(!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  function wireComposeField(el, submitFn){
+    if(!el) return;
+    el.addEventListener('input', () => autoGrow(el));
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); submitFn(); }
+    });
+  }
+  function resetComposeField(el){
+    el.value = '';
+    autoGrow(el);
+  }
+
+  let currentDate = todayStr();
+  let templates = [];
+  let currentRecord = {};
+  let customTasks = [];
+  let notes = [];
+  let agendaList = [];
+  let calcList = [];
+  let selectedWeekday = new Date().getDay();
+  let stats = {};
+  let calViewYear, calViewMonth;
+  let auto3Alarms = false;
+
+  const STORAGE_PREFIX = 'gunluk_gorevler_';
+  let activeProfile = 'emre';
+  const PROFILES = [
+    {id:'emre', label:'Emre', icon:'👤'},
+    {id:'is', label:'İş', icon:'🛠️'}
+  ];
+
+  function rawGet(key){ try{ return localStorage.getItem(STORAGE_PREFIX+key); }catch(e){ return null; } }
+  function rawSet(key, value){ try{ localStorage.setItem(STORAGE_PREFIX+key, value); }catch(e){} }
+  function scopedKeyPrefix(){ return STORAGE_PREFIX + activeProfile + ':'; }
+
+  async function migrateToProfiles(){
+    const done = await rawGet('profiles_migrated');
+    if(done === 'yes'){ activeProfile = (await rawGet('active_profile')) || 'emre'; return; }
+    const toCopy = [];
+    for(let i=0; i<localStorage.length; i++){
+      const key = localStorage.key(i);
+      if(key && key.startsWith(STORAGE_PREFIX)){
+        const suffix = key.substring(STORAGE_PREFIX.length);
+        if(suffix === 'active_profile' || suffix === 'profiles_migrated') continue;
+        if(suffix.startsWith('emre:') || suffix.startsWith('is:')) continue;
+        toCopy.push({suffix, value: localStorage.getItem(key)});
+      }
+    }
+    toCopy.forEach(({suffix, value}) => localStorage.setItem(STORAGE_PREFIX + 'emre:' + suffix, value));
+    activeProfile = 'emre';
+    await rawSet('active_profile', 'emre');
+    await rawSet('profiles_migrated', 'yes');
+  }
+
+  function showConfirm(message){
+    return new Promise((resolve) => {
+      const modal = document.getElementById('confirmModal');
+      document.getElementById('confirmText').textContent = message;
+      modal.classList.remove('hidden');
+      const yesBtn = document.getElementById('confirmYesBtn');
+      const noBtn = document.getElementById('confirmNoBtn');
+      const cleanup = (result) => {
+        modal.classList.add('hidden');
+        yesBtn.removeEventListener('click', onYes);
+        noBtn.removeEventListener('click', onNo);
+        resolve(result);
+      };
+      const onYes = () => cleanup(true);
+      const onNo = () => cleanup(false);
+      yesBtn.addEventListener('click', onYes);
+      noBtn.addEventListener('click', onNo);
+    });
+  }
+  async function safeGet(key){ try{ return localStorage.getItem(scopedKeyPrefix()+key); }catch(e){ return null; } }
+  async function safeSet(key, value){ try{ localStorage.setItem(scopedKeyPrefix()+key, value); }catch(e){ console.error('storage set failed', e); } }
+
+  async function loadTemplates(){ const raw = await safeGet('templates'); templates = raw ? (JSON.parse(raw) || []) : []; }
+  async function saveTemplates(){ await safeSet('templates', JSON.stringify(templates)); }
+
+  async function loadNotes(){ const raw = await safeGet('notes'); notes = raw ? (JSON.parse(raw) || []) : []; }
+  async function saveNotes(){ await safeSet('notes', JSON.stringify(notes)); }
+
+  async function loadAgendaList(){ const raw = await safeGet('agenda_list'); agendaList = raw ? (JSON.parse(raw) || []) : []; }
+  async function saveAgendaList(){ await safeSet('agenda_list', JSON.stringify(agendaList)); }
+
+  async function loadCalcList(){ const raw = await safeGet('calc_list'); calcList = raw ? (JSON.parse(raw) || []) : []; }
+  async function saveCalcList(){ await safeSet('calc_list', JSON.stringify(calcList)); }
+
+  async function loadAutoAlarmsState(){ const raw = await safeGet('auto_3_alarms'); auto3Alarms = raw === 'yes'; document.getElementById('threeAlarmsToggle').checked = auto3Alarms; }
+
+  let autoAlarmTimes = [{h:8,m:0}, {h:15,m:0}, {h:22,m:0}];
+  async function loadAutoAlarmTimes(){
+    const raw = await safeGet('auto_alarm_times');
+    if(raw){ try{ const parsed = JSON.parse(raw); if(Array.isArray(parsed) && parsed.length === 3) autoAlarmTimes = parsed; }catch(e){} }
+    autoAlarmTimes.forEach((t, i) => {
+      const el = document.getElementById('autoAlarmTime'+i);
+      if(el) el.value = String(t.h).padStart(2,'0') + ':' + String(t.m).padStart(2,'0');
+    });
+  }
+  async function saveAutoAlarmTimes(){ await safeSet('auto_alarm_times', JSON.stringify(autoAlarmTimes)); }
+  [0,1,2].forEach(i => {
+    const el = document.getElementById('autoAlarmTime'+i);
+    if(el) el.addEventListener('change', async (e) => {
+      const parts = (e.target.value || '').split(':');
+      const hh = parseInt(parts[0], 10), mm = parseInt(parts[1], 10);
+      if(isNaN(hh) || isNaN(mm)) return;
+      autoAlarmTimes[i] = {h:hh, m:mm};
+      await saveAutoAlarmTimes();
+    });
+  });
+  async function loadStats(){ const raw = await safeGet('stats'); stats = raw ? (JSON.parse(raw) || {}) : {}; }
+  async function saveStats(){ await safeSet('stats', JSON.stringify(stats)); }
+
+  async function loadRecord(dateStr){ const raw = await safeGet('day:'+dateStr); return raw ? JSON.parse(raw) : null; }
+  async function saveRecord(dateStr, record){ await safeSet('day:'+dateStr, JSON.stringify(record)); }
+
+  async function loadCustom(dateStr){ const raw = await safeGet('custom:'+dateStr); return raw ? (JSON.parse(raw) || []) : []; }
+  async function saveCustom(dateStr, list){ await safeSet('custom:'+dateStr, JSON.stringify(list)); }
+
+  function renderDateHeader(){
+    const d = new Date(currentDate+'T00:00:00');
+    weekdayLbl.textContent = DAYS_TR[d.getDay()];
+    fulldateLbl.textContent = `${d.getDate()} ${MONTHS_TR[d.getMonth()]} ${d.getFullYear()}`;
+    todayBadge.style.visibility = (currentDate === todayStr()) ? 'visible' : 'hidden';
+  }
+  function isToday(){ return currentDate === todayStr(); }
+
+  function taskAppliesToDate(t, dateObj){
+    if(t.type === 'weekly') return dateObj.getDay() === t.weekday;
+    if(t.type === 'monthly'){
+      const lastDay = new Date(dateObj.getFullYear(), dateObj.getMonth()+1, 0).getDate();
+      return dateObj.getDate() === Math.min(t.dayOfMonth, lastDay);
+    }
+    return true;
+  }
+  function recurrenceSuffix(t){
+    if(t.type === 'weekly') return ' · Her ' + ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'][[1,2,3,4,5,6,0].indexOf(t.weekday)];
+    if(t.type === 'monthly') return ' · Ayın ' + t.dayOfMonth + '. günü';
+    return '';
+  }
+
+  /* ---------- İÇERİK GÖRÜNTÜLE / DÜZENLE / SİL — TÜM LİSTELER İÇİN ORTAK ---------- */
+  const editRowModal = document.getElementById('editRowModal');
+  const editRowInput = document.getElementById('editRowInput');
+  const editRowModalTitle = document.getElementById('editRowModalTitle');
+  const editRowSaveBtn = document.getElementById('editRowSaveBtn');
+  const editRowDeleteBtn = document.getElementById('editRowDeleteBtn');
+  const editRowCancelBtn = document.getElementById('editRowCancelBtn');
+  let editingCtx = null; // {type, id, editable}
+
+  function findEditable(type, id){
+    if(type === 'template') return templates.find(t => t.id === id);
+    if(type === 'custom') return customTasks.find(c => c.id === id);
+    if(type === 'note') return notes.find(n => n.id === id);
+    if(type === 'agenda') return agendaList.find(a => a.id === id);
+    if(type === 'calc') return calcList.find(c => c.id === id);
+    return null;
+  }
+  function textFieldOf(type){ return type === 'calc' ? 'desc' : 'text'; }
+  async function persistType(type){
+    if(type === 'template') await saveTemplates();
+    else if(type === 'custom') await saveCustom(currentDate, customTasks);
+    else if(type === 'note') await saveNotes();
+    else if(type === 'agenda') await saveAgendaList();
+    else if(type === 'calc') await saveCalcList();
+  }
+  async function deleteEditable(type, id){
+    if(type === 'template'){
+      templates = templates.filter(t => t.id !== id);
+      await saveTemplates();
+      delete currentRecord[id];
+      await saveRecord(currentDate, currentRecord);
+      delete stats[id];
+      await saveStats();
+    } else if(type === 'custom'){
+      customTasks = customTasks.filter(c => c.id !== id);
+      await saveCustom(currentDate, customTasks);
+    } else if(type === 'note'){
+      notes = notes.filter(n => n.id !== id);
+      await saveNotes();
+    } else if(type === 'agenda'){
+      agendaList = agendaList.filter(a => a.id !== id);
+      await saveAgendaList();
+    } else if(type === 'calc'){
+      calcList = calcList.filter(c => c.id !== id);
+      await saveCalcList();
+    }
+  }
+  function refreshFor(type){
+    if(type === 'template' || type === 'custom') renderList();
+    else if(type === 'note') renderNotes();
+    else if(type === 'agenda') renderAgenda();
+    else if(type === 'calc') renderCalc();
+  }
+
+  function openItemEditor(type, id, label, editable){
+    if(editable === undefined) editable = true;
+    const obj = findEditable(type, id);
+    if(!obj) return;
+    editingCtx = {type, id, editable};
+    editRowInput.value = obj[textFieldOf(type)] || '';
+    editRowModalTitle.textContent = label || 'Düzenle';
+    editRowInput.readOnly = !editable;
+    editRowSaveBtn.style.display = editable ? 'block' : 'none';
+    editRowDeleteBtn.style.display = editable ? 'block' : 'none';
+    editRowCancelBtn.textContent = editable ? 'İptal' : 'Kapat';
+    editRowModal.classList.remove('hidden');
+    setTimeout(() => autoGrowFull(editRowInput), 0);
+  }
+  function closeItemEditor(){ editRowModal.classList.add('hidden'); editingCtx = null; }
+  editRowInput.addEventListener('input', () => autoGrowFull(editRowInput));
+  editRowCancelBtn.addEventListener('click', closeItemEditor);
+  editRowSaveBtn.addEventListener('click', async () => {
+    if(!editingCtx || !editingCtx.editable) return;
+    const val = editRowInput.value.trim();
+    if(!val) return;
+    const obj = findEditable(editingCtx.type, editingCtx.id);
+    if(obj){ obj[textFieldOf(editingCtx.type)] = val; await persistType(editingCtx.type); }
+    const type = editingCtx.type;
+    closeItemEditor();
+    refreshFor(type);
+  });
+  editRowDeleteBtn.addEventListener('click', async () => {
+    if(!editingCtx || !editingCtx.editable) return;
+    const ok = await showConfirm('Bu kaydı silmek istiyor musun?');
+    if(!ok) return;
+    const type = editingCtx.type;
+    await deleteEditable(type, editingCtx.id);
+    closeItemEditor();
+    refreshFor(type);
+  });
+
+  async function renderList(){
+    mainArea.innerHTML = '';
+    lockedNote.style.display = isToday() ? 'none' : 'block';
+    footer.style.display = 'flex';
+
+    const items = [];
+    const dObj = new Date(currentDate+'T00:00:00');
+    const PRIORITY = {custom:0, monthly:1, weekly:2, daily:3};
+    templates.filter(t => taskAppliesToDate(t, dObj)).forEach(t => {
+      const type = t.type || 'daily';
+      items.push({kind:'template', id:t.id, text:t.text, subtitle: recurrenceSuffix(t).replace(/^ · /,''), rawText:t.text,
+        tplType:type, priority: PRIORITY[type], done: !!currentRecord[t.id], editable: isToday(), alarm: t.alarm || null});
+    });
+    customTasks.forEach(c => items.push({kind:'custom', id:c.id, text:c.text, subtitle:'Bu güne özel', rawText:c.text,
+      priority: PRIORITY.custom, done: !!c.done, editable: true, alarm: c.alarm || null}));
+
+    if(items.length === 0){
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'empty-msg';
+      emptyMsg.innerHTML = 'Henüz görev eklenmedi.<br>Aşağıdan görev ekle.';
+      mainArea.appendChild(emptyMsg);
+      doneCountLbl.textContent = '0'; missingCountLbl.textContent = '0'; progressBar.style.width='0%';
+      return;
+    }
+
+    const sortByPriority = (a,b) => a.priority - b.priority;
+    const pending = items.filter(i => !i.done).sort(sortByPriority);
+    const done = items.filter(i => i.done).sort(sortByPriority);
+    const total = items.length, doneCount = done.length, missingCount = pending.length;
+    progressBar.style.width = total ? Math.round(doneCount/total*100)+'%' : '0%';
+    doneCountLbl.textContent = doneCount;
+    missingCountLbl.textContent = missingCount;
+
+    if(pending.length){
+      const lbl = document.createElement('div'); lbl.className='section-label'; lbl.textContent='Yapılacaklar';
+      mainArea.appendChild(lbl);
+      pending.forEach(it => mainArea.appendChild(buildRow(it)));
+    }
+    if(done.length){
+      const lbl2 = document.createElement('div'); lbl2.className='section-label'; lbl2.textContent='Tamamlananlar';
+      mainArea.appendChild(lbl2);
+      done.forEach(it => mainArea.appendChild(buildRow(it)));
+    }
+  }
+
+  function buildRow(item){
+    const isDone = item.done, editable = item.editable;
+    const row = document.createElement('div');
+    const highlight = !isDone && item.priority !== undefined && item.priority < 3;
+    row.className = 'task-row' + (isDone ? ' done' : '') + (editable ? '' : ' readonly') + (item.kind === 'custom' ? ' custom' : '') + (highlight && item.kind !== 'custom' ? ' highlight' : '');
+    const check = document.createElement('button');
+    check.className = 'check-btn'; check.textContent = isDone ? '✓' : ''; check.disabled = !editable;
+    check.addEventListener('click', async () => {
+      const nowDone = !isDone;
+      if(item.kind === 'template'){
+        currentRecord[item.id] = nowDone;
+        await saveRecord(currentDate, currentRecord);
+        stats[item.id] = (stats[item.id] || 0) + (nowDone ? 1 : -1);
+        if(stats[item.id] < 0) stats[item.id] = 0;
+        await saveStats();
+      } else {
+        const ct = customTasks.find(c => c.id === item.id);
+        if(ct){ ct.done = nowDone; await saveCustom(currentDate, customTasks); }
+      }
+      renderList();
+    });
+    const text = document.createElement('div'); text.className='task-text'; text.style.cursor = 'pointer';
+    const tag = document.createElement('span');
+    tag.className = item.kind === 'template' ? 'tag-recurring' : 'tag-custom';
+    let icon = '📌';
+    if(item.kind === 'template'){
+      icon = item.tplType === 'weekly' ? '📆' : (item.tplType === 'monthly' ? '📅' : '🔁');
+    }
+    tag.textContent = icon;
+    const mainLine = document.createElement('div'); mainLine.className = 'task-text-main';
+    mainLine.appendChild(tag);
+    mainLine.appendChild(document.createTextNode(item.text));
+    text.appendChild(mainLine);
+    if(item.subtitle){
+      const sub = document.createElement('div'); sub.className = 'task-text-sub';
+      sub.textContent = item.subtitle;
+      text.appendChild(sub);
+    }
+    const editorTitle = (item.kind === 'template' ? 'Görev' : 'Bu Güne Özel Görev') + (item.subtitle ? ' · ' + item.subtitle : '');
+    text.addEventListener('click', () => openItemEditor(item.kind === 'template' ? 'template' : 'custom', item.id, editorTitle, item.editable));
+    row.appendChild(check); row.appendChild(text);
+
+    const muteBtn = document.createElement('button');
+    muteBtn.className = 'row-alarm-btn';
+    const alarm = item.alarm;
+    if(alarm){
+      muteBtn.textContent = alarm.enabled !== false ? '🔔' : '🔕';
+      muteBtn.classList.toggle('is-active', alarm.enabled !== false);
+    } else {
+      muteBtn.textContent = '⏰';
+      muteBtn.classList.add('is-empty');
+    }
+    let pressTimer = null, longPressed = false;
+    muteBtn.addEventListener('pointerdown', () => { longPressed = false; pressTimer = setTimeout(() => { longPressed = true; openAlarmEditor(item); }, 480); });
+    const cancelPress = () => clearTimeout(pressTimer);
+    muteBtn.addEventListener('pointerup', async () => {
+      cancelPress();
+      if(longPressed) return;
+      if(alarm){
+        const obj = findItemContainer(item);
+        if(obj && obj.alarm){ obj.alarm.enabled = !(obj.alarm.enabled !== false); await persistItem(item); renderList(); }
+      } else { openAlarmEditor(item); }
+    });
+    muteBtn.addEventListener('pointerleave', cancelPress);
+    row.appendChild(muteBtn);
+
+    if(editable){
+      const del = document.createElement('button');
+      del.className='del-btn'; del.textContent='✕';
+      del.addEventListener('click', async () => {
+        if(item.kind === 'template'){
+          const ok = await showConfirm(`"${item.text}" görevini silmek istiyor musun?`);
+          if(!ok) return;
+          templates = templates.filter(t => t.id !== item.id);
+          await saveTemplates();
+          delete currentRecord[item.id];
+          await saveRecord(currentDate, currentRecord);
+          delete stats[item.id];
+          await saveStats();
+        } else {
+          customTasks = customTasks.filter(c => c.id !== item.id);
+          await saveCustom(currentDate, customTasks);
+        }
+        renderList();
+      });
+      row.appendChild(del);
+    }
+    return row;
+  }
+
+  async function goToDate(dateStr){
+    currentDate = dateStr;
+    renderDateHeader();
+    mainArea.innerHTML = '<div class="loading">Yükleniyor...</div>';
+    const dObj = new Date(currentDate+'T00:00:00');
+    const applicable = templates.filter(t => taskAppliesToDate(t, dObj));
+    let rec = await loadRecord(currentDate);
+    let changed = false;
+    if(rec === null){ rec = {}; changed = true; }
+    applicable.forEach(t => { if(rec[t.id] === undefined){ rec[t.id] = false; changed = true; } });
+    if(changed) await saveRecord(currentDate, rec);
+    currentRecord = rec;
+    customTasks = await loadCustom(currentDate);
+    setModeUI();
+    renderList();
+  }
+
+  function setModeUI(){
+    const allowRecurring = isToday();
+    addModeRow.style.display = 'flex';
+    recurrenceSelect.disabled = false;
+    Array.from(recurrenceSelect.options).forEach(opt => {
+      opt.disabled = (!allowRecurring && ['daily','weekly','monthly'].includes(opt.value));
+    });
+    if(!allowRecurring && ['daily','weekly','monthly'].includes(recurrenceSelect.value)){ recurrenceSelect.value = 'custom'; }
+    updateExtraVisibility();
+  }
+  function updateExtraVisibility(){
+    const v = recurrenceSelect.value;
+    weeklyExtra.style.display = v === 'weekly' ? 'block' : 'none';
+    monthlyExtra.style.display = v === 'monthly' ? 'block' : 'none';
+    if(v === 'monthly' && !monthDayInput.value) monthDayInput.value = new Date(currentDate+'T00:00:00').getDate();
+    updateWeekdayUI();
+  }
+  function updateWeekdayUI(){
+    Array.from(weekdayRow.children).forEach(btn => btn.classList.toggle('sel', parseInt(btn.dataset.wd,10) === selectedWeekday));
+  }
+  recurrenceSelect.addEventListener('change', updateExtraVisibility);
+  Array.from(weekdayRow.children).forEach(btn => btn.addEventListener('click', () => { selectedWeekday = parseInt(btn.dataset.wd,10); updateWeekdayUI(); }));
+
+  async function addTask(){
+    const val = newTaskInput.value.trim();
+    if(!val) return;
+    const mode = recurrenceSelect.value;
+    if(mode === 'note'){
+      notes.push({id: 'n_' + Date.now(), text: val, done:false});
+      await saveNotes();
+    } else if(mode === 'custom'){
+      customTasks.push({id: 'c_' + Date.now(), text: val, done:false});
+      await saveCustom(currentDate, customTasks);
+    } else {
+      const id = 't_' + Date.now();
+      const tpl = {id, text: val, type: mode, createdDate: currentDate};
+      if(mode === 'weekly') tpl.weekday = selectedWeekday;
+      if(mode === 'monthly'){ let d = parseInt(monthDayInput.value, 10) || 1; tpl.dayOfMonth = Math.min(Math.max(d,1),31); }
+      templates.push(tpl);
+      await saveTemplates();
+      if(taskAppliesToDate(tpl, new Date(currentDate+'T00:00:00'))){ currentRecord[id] = false; await saveRecord(currentDate, currentRecord); }
+    }
+    resetComposeField(newTaskInput);
+    renderList();
+  }
+  addBtn.addEventListener('click', addTask);
+  wireComposeField(newTaskInput, addTask);
+
+  /* ---------- SATIR SATIR DÜZENLENEBİLİR VE BÜYÜTÜLEBİLİR AJANDA ---------- */
+  const agendaOverlay = document.getElementById('agendaOverlay');
+  const agendaListEl = document.getElementById('agendaList');
+  const newAgendaInput = document.getElementById('newAgendaInput');
+
+  function renderAgenda(){
+    agendaListEl.innerHTML = '';
+    if(agendaList.length === 0){
+      agendaListEl.innerHTML = '<div class="empty-msg">Henüz ajanda kaydı yok.<br>Aşağıdan yeni not ekleyin.</div>';
+      return;
+    }
+    agendaList.slice().reverse().forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'agenda-row-item';
+
+      const colDate = document.createElement('div');
+      colDate.className = 'agenda-col-date';
+      colDate.textContent = item.dateLabel || item.dateStr;
+
+      const colDesc = document.createElement('div');
+      colDesc.className = 'agenda-col-desc';
+      colDesc.textContent = item.text;
+      colDesc.title = "Büyütmek / düzenlemek için dokunun";
+      colDesc.addEventListener('click', () => openItemEditor('agenda', item.id, '📖 Ajanda · ' + (item.dateLabel || item.dateStr), true));
+
+      const colRight = document.createElement('div');
+      colRight.className = 'agenda-col-right';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'edit-btn'; editBtn.textContent = '✏️'; editBtn.title = "Düzenle";
+      editBtn.addEventListener('click', () => openItemEditor('agenda', item.id, '📖 Ajanda · ' + (item.dateLabel || item.dateStr), true));
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'del-btn'; delBtn.textContent = '✕'; delBtn.title = "Sil";
+      delBtn.addEventListener('click', async () => {
+        if(await showConfirm('Bu ajanda satırını silmek istiyor musun?')){
+          agendaList = agendaList.filter(a => a.id !== item.id);
+          await saveAgendaList();
+          renderAgenda();
+        }
+      });
+
+      colRight.appendChild(editBtn);
+      colRight.appendChild(delBtn);
+      row.appendChild(colDate);
+      row.appendChild(colDesc);
+      row.appendChild(colRight);
+      agendaListEl.appendChild(row);
+    });
+  }
+
+  document.getElementById('agendaBtn').addEventListener('click', () => { renderAgenda(); agendaOverlay.classList.remove('hidden'); });
+  document.getElementById('agendaCloseBtn').addEventListener('click', () => agendaOverlay.classList.add('hidden'));
+
+  async function addAgendaItem(){
+    const val = newAgendaInput.value.trim();
+    if(!val) return;
+    const now = new Date();
+    const dateLabel = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+    agendaList.push({id: 'ag_' + Date.now(), text: val, dateLabel, dateStr: todayStr()});
+    await saveAgendaList();
+    resetComposeField(newAgendaInput);
+    renderAgenda();
+  }
+  document.getElementById('addAgendaBtn').addEventListener('click', addAgendaItem);
+  wireComposeField(newAgendaInput, addAgendaItem);
+
+  /* ---------- HESAP / GELİR-GİDER MENÜSÜ ---------- */
+  const calcOverlay = document.getElementById('calcOverlay');
+  const calcListEl = document.getElementById('calcList');
+  const calcTotalVal = document.getElementById('calcTotalVal');
+  const calcDescInput = document.getElementById('calcDescInput');
+  const calcAmountInput = document.getElementById('calcAmountInput');
+
+  function renderCalc(){
+    calcListEl.innerHTML = '';
+    let total = 0;
+    if(calcList.length === 0){
+      calcListEl.innerHTML = '<div class="empty-msg">Henüz hesap kaydı yok.<br>Aşağıdan harcama veya gelir ekleyin.</div>';
+    } else {
+      calcList.slice().reverse().forEach(item => {
+        total += item.amount;
+        const row = document.createElement('div');
+        row.className = 'calc-row-item';
+        
+        const colDate = document.createElement('div');
+        colDate.className = 'calc-col-date';
+        colDate.textContent = item.dateLabel || item.dateStr;
+        
+        const colDesc = document.createElement('div');
+        colDesc.className = 'calc-col-desc';
+        colDesc.textContent = item.desc;
+        colDesc.title = "Büyütmek / düzenlemek için dokunun";
+        colDesc.addEventListener('click', () => openItemEditor('calc', item.id, '💳 Hesap · ' + (item.dateLabel || item.dateStr), true));
+        
+        const colRight = document.createElement('div');
+        colRight.className = 'calc-col-right';
+        
+        const badge = document.createElement('div');
+        badge.className = 'calc-val-badge ' + (item.amount >= 0 ? 'plus' : 'minus');
+        badge.textContent = (item.amount >= 0 ? '+' : '') + Math.round(item.amount) + ' TL';
+        
+        const del = document.createElement('button');
+        del.className = 'del-btn'; del.textContent = '✕';
+        del.addEventListener('click', async () => {
+          calcList = calcList.filter(c => c.id !== item.id);
+          await saveCalcList();
+          renderCalc();
+        });
+        
+        colRight.appendChild(badge); colRight.appendChild(del);
+        row.appendChild(colDate); row.appendChild(colDesc); row.appendChild(colRight);
+        calcListEl.appendChild(row);
+      });
+    }
+    calcTotalVal.textContent = (total >= 0 ? '+' : '') + Math.round(total) + ' TL';
+    calcTotalVal.style.color = total >= 0 ? 'var(--accent)' : 'var(--danger)';
+  }
+
+  document.getElementById('calcBtn').addEventListener('click', () => { renderCalc(); calcOverlay.classList.remove('hidden'); });
+  document.getElementById('calcCloseBtn').addEventListener('click', () => calcOverlay.classList.add('hidden'));
+
+  async function addCalcItem(){
+    const desc = calcDescInput.value.trim();
+    const amt = parseFloat(calcAmountInput.value);
+    if(!desc || isNaN(amt)) return;
+    const now = new Date();
+    const dateLabel = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+    calcList.push({id: 'calc_' + Date.now(), desc, amount: Math.round(amt), dateLabel, dateStr: todayStr()});
+    await saveCalcList();
+    calcDescInput.value = ''; calcAmountInput.value = '';
+    renderCalc();
+  }
+  document.getElementById('addCalcBtn').addEventListener('click', addCalcItem);
+
+  /* ---------- TAKVİM ---------- */
+  function openCalendar(){ calViewYear = new Date(currentDate+'T00:00:00').getFullYear(); calViewMonth = new Date(currentDate+'T00:00:00').getMonth(); calendarOverlay.classList.remove('hidden'); renderCalendar(); }
+  function closeCalendar(){ calendarOverlay.classList.add('hidden'); }
+
+  async function renderCalendar(){
+    calMonthLabel.textContent = `${MONTHS_TR[calViewMonth]} ${calViewYear}`;
+    calGrid.innerHTML = '';
+    const firstDay = new Date(calViewYear, calViewMonth, 1);
+    const leading = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(calViewYear, calViewMonth+1, 0).getDate();
+    const cells = [];
+    for(let i=0;i<leading;i++) cells.push(null);
+    for(let day=1; day<=daysInMonth; day++) cells.push(day);
+
+    for(const day of cells){
+      const cellDiv = document.createElement('div');
+      if(day === null){ cellDiv.className='cal-cell empty'; calGrid.appendChild(cellDiv); continue; }
+      const dateStr = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      cellDiv.className = 'cal-cell';
+      if(dateStr === todayStr()) cellDiv.classList.add('today');
+      if(dateStr === currentDate) cellDiv.classList.add('selected');
+      cellDiv.textContent = day;
+      cellDiv.addEventListener('click', () => { goToDate(dateStr); closeCalendar(); });
+      calGrid.appendChild(cellDiv);
+    }
+  }
+
+  document.getElementById('calendarBtn').addEventListener('click', openCalendar);
+  document.getElementById('calCloseBtn').addEventListener('click', closeCalendar);
+  document.getElementById('calPrevMonth').addEventListener('click', () => { calViewMonth--; if(calViewMonth<0){calViewMonth=11; calViewYear--;} renderCalendar(); });
+  document.getElementById('calNextMonth').addEventListener('click', () => { calViewMonth++; if(calViewMonth>11){calViewMonth=0; calViewYear++;} renderCalendar(); });
+
+  document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); statsOverlay.classList.remove('hidden'); });
+  document.getElementById('statsCloseBtn').addEventListener('click', () => statsOverlay.classList.add('hidden'));
+
+  /* ---------- VERİLERİM / RUTİN TAKİP ORANLARI ----------
+     Her rutin için, o rutini eklediğin günden bugüne kadar uygulanabildiği
+     gün sayısı ile kaç gün gerçekten tamamladığını (X / Y gün) hesaplar.
+     Örn: 30 gün önce eklenen "Spora git" rutini, 30 günün 10'unda
+     tamamlanmışsa "10/30" olarak gösterilir. Haftalık/aylık rutinlerde
+     yalnızca uygulanabildiği günler sayılır. */
+  async function computeRoutineStats(t){
+    const startStr = t.createdDate || todayStr();
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(todayStr() + 'T00:00:00');
+    if(isNaN(start.getTime()) || start > end) return {done:0, total:0};
+    let total = 0, done = 0;
+    let cur = new Date(start);
+    while(cur <= end){
+      if(taskAppliesToDate(t, cur)){
+        total++;
+        const rec = await loadRecord(fmt(cur));
+        if(rec && rec[t.id]) done++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return {done, total};
+  }
+
+  async function renderStats(){
+    if(templates.length === 0){
+      statsList.innerHTML = '<div class="empty-msg">Henüz rutin eklenmedi.</div>';
+      return;
+    }
+    statsList.innerHTML = '<div class="empty-msg">Hesaplanıyor...</div>';
+    const rows = [];
+    for(const t of templates){
+      const r = await computeRoutineStats(t);
+      rows.push({text: t.text, subtitle: recurrenceSuffix(t).replace(/^ · /,''), done: r.done, total: r.total});
+    }
+    rows.sort((a,b) => (b.total ? b.done/b.total : 0) - (a.total ? a.done/a.total : 0));
+    statsList.innerHTML = '';
+    rows.forEach(r => {
+      const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
+      const row = document.createElement('div'); row.className = 'stat-row-item';
+      const top = document.createElement('div'); top.className = 'stat-row-top';
+      const txt = document.createElement('div'); txt.className = 'stat-row-text';
+      txt.textContent = r.text + (r.subtitle ? ' · ' + r.subtitle : '');
+      const ratio = document.createElement('div'); ratio.className = 'stat-row-ratio';
+      ratio.textContent = `${r.done}/${r.total}  (%${pct})`;
+      top.appendChild(txt); top.appendChild(ratio);
+      const barbg = document.createElement('div'); barbg.className = 'stat-row-barbg';
+      const barfill = document.createElement('div'); barfill.className = 'stat-row-barfill';
+      barfill.style.width = pct + '%';
+      barbg.appendChild(barfill);
+      row.appendChild(top); row.appendChild(barbg);
+      statsList.appendChild(row);
+    });
+  }
+
+  /* ---------- SÜREKLİ NOTLAR ---------- */
+  const notesOverlay = document.getElementById('notesOverlay');
+  const notesList = document.getElementById('notesList');
+  const newNoteInput = document.getElementById('newNoteInput');
+
+  function renderNotes(){
+    notesList.innerHTML = '';
+    if(notes.length === 0){ notesList.innerHTML = '<div class="empty-msg">Henüz not eklenmedi.</div>'; return; }
+    notes.forEach(n => notesList.appendChild(buildNoteRow(n)));
+  }
+
+  function buildNoteRow(note){
+    const row = document.createElement('div'); row.className = 'task-row' + (note.done ? ' done' : ''); row.style.marginBottom = '8px';
+    const check = document.createElement('button'); check.className = 'check-btn'; check.textContent = note.done ? '✓' : '';
+    check.addEventListener('click', async () => { note.done = !note.done; await saveNotes(); renderNotes(); });
+    const text = document.createElement('div'); text.className = 'task-text'; text.style.cursor = 'pointer';
+    const mainLine = document.createElement('div'); mainLine.className = 'task-text-main'; mainLine.textContent = note.text;
+    text.appendChild(mainLine); text.addEventListener('click', () => openItemEditor('note', note.id, '📝 Not', true));
+    row.appendChild(check); row.appendChild(text);
+    const del = document.createElement('button'); del.className = 'del-btn'; del.textContent = '✕';
+    del.addEventListener('click', async () => { if(await showConfirm(`"${note.text}" notunu silmek istiyor musun?`)){ notes = notes.filter(n => n.id !== note.id); await saveNotes(); renderNotes(); } });
+    row.appendChild(del);
+    return row;
+  }
+
+  document.getElementById('notesBtn').addEventListener('click', () => { renderNotes(); notesOverlay.classList.remove('hidden'); });
+  document.getElementById('notesCloseBtn').addEventListener('click', () => notesOverlay.classList.add('hidden'));
+
+  async function addNote(){ const val = newNoteInput.value.trim(); if(!val) return; notes.push({id:'n_'+Date.now(), text:val, done:false}); await saveNotes(); resetComposeField(newNoteInput); renderNotes(); }
+  document.getElementById('addNoteBtn').addEventListener('click', addNote);
+  wireComposeField(newNoteInput, addNote);
+
+  /* ---------- STANDART E-TABLO / EXCEL AKTARIMI ---------- */
+  document.getElementById('exportExcelBtn').addEventListener('click', () => {
+    let excelXML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>`;
+    
+    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Ajanda</x:Name><x:WorksheetSource HRef="#sheet0"/></x:ExcelWorksheet>`;
+    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Hesap</x:Name><x:WorksheetSource HRef="#sheet1"/></x:ExcelWorksheet>`;
+    excelXML += `<x:ExcelWorksheet><x:Name>Sürekli Notlar</x:Name><x:WorksheetSource HRef="#sheet2"/></x:ExcelWorksheet>`;
+    excelXML += `<x:ExcelWorksheet><x:Name>Rutinler ve Görevler</x:Name><x:WorksheetSource HRef="#sheet3"/></x:ExcelWorksheet>`;
+    
+    excelXML += `</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>`;
+    
+    // Tab 1: Ajanda
+    excelXML += `<table id="sheet0" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Ajanda Notları</th><th style="background:#132540;color:#fff;">Tutar</th></tr>`;
+    agendaList.forEach(a => {
+      excelXML += `<tr><td>${a.dateLabel || a.dateStr}</td><td>${a.text}</td><td></td></tr>`;
+    });
+    excelXML += `</table>`;
+
+    // Tab 2: Günlük Hesap
+    excelXML += `<table id="sheet1" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Açıklama</th><th style="background:#132540;color:#fff;">Tutar (TL)</th></tr>`;
+    calcList.forEach(c => {
+      excelXML += `<tr><td>${c.dateLabel || c.dateStr}</td><td>${c.desc}</td><td>${c.amount}</td></tr>`;
+    });
+    excelXML += `</table>`;
+
+    // Tab 3: Notlar
+    excelXML += `<table id="sheet2" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Not Metni</th><th style="background:#132540;color:#fff;">Durum</th></tr>`;
+    notes.forEach(n => { excelXML += `<tr><td>-</td><td>${n.text}</td><td>${n.done ? 'Tamamlandı' : 'Bekliyor'}</td></tr>`; });
+    excelXML += `</table>`;
+
+    // Tab 4: Şablon Görevler
+    excelXML += `<table id="sheet3" border="1"><tr><th style="background:#132540;color:#fff;">Başlangıç Tarihi</th><th style="background:#132540;color:#fff;">Görev Açıklaması</th><th style="background:#132540;color:#fff;">Tekrar Türü</th></tr>`;
+    templates.forEach(t => { excelXML += `<tr><td>${t.createdDate || '-'}</td><td>${t.text}</td><td>${t.type}</td></tr>`; });
+    excelXML += `</table></body></html>`;
+
+    const blob = new Blob([excelXML], {type: 'application/vnd.ms-excel'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Gunluk-Gorevler-Verileri-${activeProfile}-${todayStr()}.xls`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const backup = { profile: activeProfile, templates, stats, notes, agendaList, calcList, auto3Alarms, days: {}, customDays: {} };
+    const dayPrefix = scopedKeyPrefix() + 'day:';
+    const customPrefix = scopedKeyPrefix() + 'custom:';
+    for(let i=0; i<localStorage.length; i++){
+      const key = localStorage.key(i);
+      if(key && key.startsWith(dayPrefix)){ try{ backup.days[key.substring(dayPrefix.length)] = JSON.parse(localStorage.getItem(key)); }catch(e){} }
+      if(key && key.startsWith(customPrefix)){ try{ backup.customDays[key.substring(customPrefix.length)] = JSON.parse(localStorage.getItem(key)); }catch(e){} }
+    }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `gunluk-gorevler-yedek-${activeProfile}-${todayStr()}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!await showConfirm('Mevcut veriler yedekteki verilerle değiştirilecek. Emin misin?')) return;
+        templates = data.templates || []; stats = data.stats || {}; notes = data.notes || [];
+        agendaList = data.agendaList || []; calcList = data.calcList || []; auto3Alarms = !!data.auto3Alarms;
+        await saveTemplates(); await saveStats(); await saveNotes(); await saveAgendaList(); await saveCalcList();
+        await safeSet('auto_3_alarms', auto3Alarms ? 'yes' : 'no');
+        alert('Yedek yüklendi.'); location.reload();
+      }catch(err){ alert('Geçersiz dosya.'); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  });
+
+  /* ---------- ALARM SİSTEMİ ---------- */
+  document.getElementById('threeAlarmsToggle').addEventListener('change', async (e) => {
+    auto3Alarms = e.target.checked;
+    await safeSet('auto_3_alarms', auto3Alarms ? 'yes' : 'no');
+  });
+
+  const CUSTOM_SOUND_KEY = 'custom_alarm_sound';
+  let customSoundDataUrl = null; let audioCtx = null; let ringingInterval = null; let ringingAudioEl = null; let selectedSound = 'classic';
+
+  const alarmHour = document.getElementById('alarmHour');
+  const alarmMinute = document.getElementById('alarmMinute');
+  const alarmModal = document.getElementById('alarmModal');
+  const soundList = document.getElementById('soundList');
+  const customSoundLabel = document.getElementById('customSoundLabel');
+  const soundFileInput = document.getElementById('soundFile');
+  const ringingModal = document.getElementById('ringingModal');
+  const ringingTaskText = document.getElementById('ringingTaskText');
+
+  function getAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+  function beep(freq, startTime, duration, type){
+    const ctxA = getAudioCtx(); const osc = ctxA.createOscillator(); const gain = ctxA.createGain();
+    osc.type = type || 'sine'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, startTime); gain.gain.exponentialRampToValueAtTime(0.35, startTime+0.02); gain.gain.exponentialRampToValueAtTime(0.0001, startTime+duration);
+    osc.connect(gain); gain.connect(ctxA.destination); osc.start(startTime); osc.stop(startTime+duration+0.02);
+  }
+  function playPreset(id){
+    const ctxA = getAudioCtx(); const now = ctxA.currentTime;
+    if(id === 'classic'){ beep(880, now, 0.15,'sine'); beep(880, now+0.25, 0.15,'sine'); beep(1046, now+0.5, 0.25,'sine'); }
+    else if(id === 'soft'){ beep(523, now, 0.4,'sine'); beep(659, now+0.35, 0.5,'sine'); }
+    else if(id === 'urgent'){ for(let i=0;i<6;i++){ beep(1200, now+i*0.18, 0.1,'square'); } }
+  }
+
+  async function loadCustomSound(){ customSoundDataUrl = await safeGet(CUSTOM_SOUND_KEY); customSoundLabel.textContent = customSoundDataUrl ? '🎵 Yüklü Ses Kullanılıyor' : '🎵 Telefon Zil Sesi / MP3 Seç'; }
+  document.getElementById('uploadSoundBtn').addEventListener('click', () => soundFileInput.click());
+  soundFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    if(file.size > 8*1024*1024){ alert('Ses dosyası 8MB altında olmalıdır.'); return; }
+    const reader = new FileReader();
+    reader.onload = async () => { customSoundDataUrl = reader.result; await safeSet(CUSTOM_SOUND_KEY, customSoundDataUrl); customSoundLabel.textContent = '🎵 Yüklü Ses Kullanılıyor'; selectSound('custom'); };
+    reader.readAsDataURL(file);
+  });
+
+  function selectSound(id){ selectedSound = id; Array.from(soundList.children).forEach(opt => { opt.classList.toggle('sel', opt.dataset.sound === id); const radio = opt.querySelector('input[type=radio]'); if(radio) radio.checked = (opt.dataset.sound === id); }); }
+  Array.from(soundList.children).forEach(opt => opt.addEventListener('click', (e) => { if(e.target.tagName !== 'BUTTON') selectSound(opt.dataset.sound); }));
+  Array.from(document.querySelectorAll('[data-preview]')).forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); playPreset(btn.dataset.preview); }));
+
+  let editingItem = null;
+  function findItemContainer(item){ if(item.kind === 'template') return templates.find(t => t.id === item.id); if(item.kind === 'note') return notes.find(n => n.id === item.id); return customTasks.find(c => c.id === item.id); }
+  async function persistItem(item){ if(item.kind === 'template') await saveTemplates(); else if(item.kind === 'note') await saveNotes(); else await saveCustom(currentDate, customTasks); }
+
+  function openAlarmEditor(item){ editingItem = item; const obj = findItemContainer(item); const alarm = obj && obj.alarm; document.getElementById('alarmSheetTitle').textContent = 'Alarm — ' + item.rawText; alarmHour.value = alarm ? alarm.hour : 8; alarmMinute.value = alarm ? alarm.minute : 0; selectSound(alarm ? alarm.soundId : 'classic'); document.getElementById('alarmRemoveBtn').style.display = alarm ? 'block' : 'none'; alarmModal.classList.remove('hidden'); }
+  function closeAlarmEditor(){ alarmModal.classList.add('hidden'); editingItem = null; }
+
+  document.getElementById('alarmCancelBtn').addEventListener('click', closeAlarmEditor);
+  document.getElementById('alarmSaveBtn').addEventListener('click', async () => {
+    if(!editingItem) return;
+    let h = parseInt(alarmHour.value,10), m = parseInt(alarmMinute.value,10);
+    if(isNaN(h) || h<0 || h>23 || isNaN(m) || m<0 || m>59){ alert('Geçerli bir saat girin.'); return; }
+    const obj = findItemContainer(editingItem); if(!obj) return;
+    obj.alarm = { hour:h, minute:m, soundId:selectedSound, enabled:true, lastRungDate:null };
+    await persistItem(editingItem); closeAlarmEditor(); renderList();
+  });
+  document.getElementById('alarmRemoveBtn').addEventListener('click', async () => { if(!editingItem) return; const obj = findItemContainer(editingItem); if(obj){ delete obj.alarm; await persistItem(editingItem); } closeAlarmEditor(); renderList(); });
+
+  let autoAlarmLastRung = {};
+  async function checkAlarms(){
+    if(!ringingModal.classList.contains('hidden')) return;
+    const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const todayS = todayStr();
+    if(auto3Alarms){
+      for(let idx=0; idx<autoAlarmTimes.length; idx++){
+        const targetH = autoAlarmTimes[idx].h, targetM = autoAlarmTimes[idx].m;
+        const key = `${todayS}_${idx}_${targetH}_${targetM}`;
+        if(h === targetH && m === targetM && !autoAlarmLastRung[key]){ autoAlarmLastRung[key] = true; triggerRing("Kontrol Zamanı! Görevlerini ve ajandanı kontrol et.", "classic", false); return; }
+      }
+    }
+    const nowMinutes = h*60 + m; const list = []; const dObj = new Date();
+    templates.filter(t => t.alarm && taskAppliesToDate(t, dObj)).forEach(t => list.push({text:t.text, alarm:t.alarm, obj:t, kind:'template'}));
+    if(currentDate === todayS){ customTasks.filter(c => c.alarm).forEach(c => list.push({text:c.text, alarm:c.alarm, obj:c, kind:'custom'})); }
+    for(const c of list){
+      if(c.alarm.enabled === false) continue;
+      const alarmMinutes = c.alarm.hour*60 + c.alarm.minute;
+      if(nowMinutes >= alarmMinutes && c.alarm.lastRungDate !== todayS){
+        c.obj.alarm.lastRungDate = todayS;
+        if(c.kind === 'template') await saveTemplates(); else await saveCustom(currentDate, customTasks);
+        triggerRing(c.text, c.alarm.soundId, nowMinutes > alarmMinutes); break;
+      }
+    }
+  }
+  setInterval(checkAlarms, 15000);
+
+  function triggerRing(text, soundId, missed){
+    document.querySelector('.ringing-modal .rtitle').textContent = missed ? '⏰ Kaçırdığın Hatırlatma' : 'Hatırlatma!';
+    ringingTaskText.textContent = text; ringingModal.classList.remove('hidden');
+    if(navigator.vibrate) navigator.vibrate([400,200,400,200,400]);
+    if(soundId === 'custom' && customSoundDataUrl){ ringingAudioEl = new Audio(customSoundDataUrl); ringingAudioEl.loop = true; ringingAudioEl.play().catch(()=>{}); }
+    else { playPreset(soundId); ringingInterval = setInterval(() => playPreset(soundId), 1400); }
+  }
+  function stopRing(){ ringingModal.classList.add('hidden'); if(ringingInterval){ clearInterval(ringingInterval); ringingInterval = null; } if(ringingAudioEl){ ringingAudioEl.pause(); ringingAudioEl = null; } }
+  document.getElementById('stopRingBtn').addEventListener('click', stopRing);
+
+  /* ---------- TEMA VEYA PROFİL ---------- */
+  const THEME_KEY = 'app_theme';
+  function applyTheme(id){ document.documentElement.setAttribute('data-theme', id); Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => btn.classList.toggle('sel', btn.dataset.theme === id)); }
+  async function loadTheme(){ applyTheme((await safeGet(THEME_KEY)) || 'dark'); }
+  Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => btn.addEventListener('click', async () => { applyTheme(btn.dataset.theme); await safeSet(THEME_KEY, btn.dataset.theme); }));
+
+  function updateProfileUI(){ const p = PROFILES.find(x => x.id === activeProfile) || PROFILES[0]; document.getElementById('profileBtn').textContent = p.icon + ' ' + p.label; }
+  async function loadProfileData(){ await loadTemplates(); await loadNotes(); await loadAgendaList(); await loadCalcList(); await loadStats(); await loadAutoAlarmsState(); await loadAutoAlarmTimes(); await goToDate(todayStr()); }
+  document.getElementById('profileBtn').addEventListener('click', async () => {
+    activeProfile = PROFILES[(PROFILES.findIndex(p => p.id === activeProfile)+1) % PROFILES.length].id;
+    rawSet('active_profile', activeProfile); updateProfileUI(); await loadProfileData();
+  });
+
+  (async function init(){ await migrateToProfiles(); updateProfileUI(); await loadCustomSound(); await loadTheme(); await loadProfileData(); })();
+
+  if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
+})();
+</script>
+</body>
+</html>
