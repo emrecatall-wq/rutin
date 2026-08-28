@@ -117,6 +117,11 @@
     background:linear-gradient(90deg, var(--custom-dim) 0%, var(--bg2) 80%) !important;
   }
 
+  .row-alarm-btn{flex:0 0 auto; width:32px; height:32px; border-radius:8px; border:none;
+    background:transparent; color:var(--text-dim); font-size:16px; opacity:.5;
+    border-right:1px solid var(--line); margin-right:2px; padding-right:8px;}
+  .row-alarm-btn.is-active{opacity:1; color:var(--accent);}
+  .row-alarm-btn.is-empty{opacity:.25;}
   .check-btn{flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:2px solid var(--line);
     background:transparent; display:flex; align-items:center; justify-content:center; color:var(--done);
     font-size:16px; font-weight:bold;}
@@ -140,7 +145,27 @@
   .btn-save{background:var(--accent); color:#1a1005;}
   .btn-remove{background:var(--danger); color:#fff;}
   .btn-cancel{background:var(--line); color:var(--text);}
-  
+  .time-row{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px;}
+  .time-row input{width:70px; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:12px; font-size:22px; text-align:center; outline:none;}
+  .time-row span{font-size:22px; color:var(--text-dim);}
+  .sound-list{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
+  .sound-opt{display:flex; align-items:center; gap:10px; background:var(--bg); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px;}
+  .sound-opt.sel{border-color:var(--accent); background:var(--accent-dim);}
+  .sound-opt input{margin:0;}
+  .sound-opt label{flex:1; font-size:14px;}
+  .sound-opt button{background:var(--line); border:none; color:var(--text); border-radius:8px; padding:6px 10px; font-size:12px;}
+
+  .ringing-modal{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px; text-align:center; padding:20px;}
+  .ringing-modal.hidden{display:none;}
+  .ringing-modal .bell{font-size:60px; animation:ring 0.4s infinite;}
+  @keyframes ring{0%{transform:rotate(0);}25%{transform:rotate(15deg);}75%{transform:rotate(-15deg);}100%{transform:rotate(0);}}
+  .ringing-modal .rtitle{font-size:20px; font-weight:700; color:var(--accent);}
+  .ringing-modal .rtext{font-size:16px; color:var(--text);}
+  .ringing-modal button{background:var(--danger); color:#fff; border:none; border-radius:14px;
+    padding:16px 34px; font-size:16px; font-weight:700;}
   .empty-msg{text-align:center; color:var(--text-dim); font-size:14px; margin-top:40px; padding:0 20px;}
 
   footer{flex:0 0 auto; background:var(--bg2); border-top:2px solid var(--line); padding:10px 12px;
@@ -190,6 +215,7 @@
   
   .backup-row{flex:0 0 auto; display:flex; flex-direction:column; gap:8px; padding:12px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
     border-top:1px solid var(--line);}
+  .backup-btn-group{display:flex; gap:8px;}
   .backup-btn{flex:1; background:var(--line); color:var(--text); border:none; border-radius:10px;
     padding:12px 8px; font-size:13px; font-weight:600; cursor:pointer;}
   .backup-btn.excel-btn{background:var(--done); color:#fff;}
@@ -287,7 +313,7 @@
     </div>
   </header>
 
-  <main id="mainArea"></main>
+  <main id="mainArea"><div class="loading">Yükleniyor...</div></main>
 
   <footer id="footer" style="display:none;">
     <div class="add-mode-row" id="addModeRow">
@@ -352,7 +378,7 @@
     </div>
   </div>
 
-  <!-- CALCULATOR OVERLAY -->
+  <!-- CALCULATOR / HESAP OVERLAY -->
   <div id="calcOverlay" class="overlay hidden">
     <div class="overlay-header">
       <button class="close-btn" id="calcCloseBtn">‹ Geri</button>
@@ -389,6 +415,46 @@
     </div>
   </div>
 
+  <!-- ALARM EDITOR -->
+  <div id="alarmModal" class="alarm-modal hidden">
+    <div class="alarm-sheet">
+      <h3 id="alarmSheetTitle">Alarm Ayarla</h3>
+      <div class="time-row">
+        <input type="number" id="alarmHour" min="0" max="23" placeholder="SS">
+        <span>:</span>
+        <input type="number" id="alarmMinute" min="0" max="59" placeholder="DD">
+      </div>
+      <div class="sound-list" id="soundList">
+        <div class="sound-opt" data-sound="classic">
+          <input type="radio" name="soundOpt" id="s_classic" value="classic">
+          <label for="s_classic">🔔 Klasik Zil</label>
+          <button type="button" data-preview="classic">Dinle</button>
+        </div>
+        <div class="sound-opt" data-sound="soft">
+          <input type="radio" name="soundOpt" id="s_soft" value="soft">
+          <label for="s_soft">🎐 Yumuşak Ton</label>
+          <button type="button" data-preview="soft">Dinle</button>
+        </div>
+        <div class="sound-opt" data-sound="urgent">
+          <input type="radio" name="soundOpt" id="s_urgent" value="urgent">
+          <label for="s_urgent">🚨 Acil Uyarı</label>
+          <button type="button" data-preview="urgent">Dinle</button>
+        </div>
+        <div class="sound-opt" data-sound="custom">
+          <input type="radio" name="soundOpt" id="s_custom" value="custom">
+          <label for="s_custom" id="customSoundLabel">🎵 Telefon Zil Sesi / MP3 Seç</label>
+          <button type="button" id="uploadSoundBtn">Dosya Seç</button>
+          <input type="file" id="soundFile" accept="audio/*" style="display:none;">
+        </div>
+      </div>
+      <div class="alarm-actions">
+        <button class="btn-cancel" id="alarmCancelBtn">İptal</button>
+        <button class="btn-remove" id="alarmRemoveBtn" style="display:none;">Sil</button>
+        <button class="btn-save" id="alarmSaveBtn">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
   <!-- STATS OVERLAY -->
   <div id="statsOverlay" class="overlay hidden">
     <div class="overlay-header">
@@ -415,7 +481,7 @@
       </div>
     </div>
 
-    <div class="section-label" style="margin:4px 12px 0;">Rutin Takip Oranları</div>
+    <div class="section-label" style="margin:4px 12px 0;">Rutin Takip Oranları (başladığın günden bugüne)</div>
     <div class="stats-list" id="statsList"></div>
     <div class="theme-section">
       <h4>🎨 Tema</h4>
@@ -430,11 +496,24 @@
     </div>
     <div class="backup-row">
       <button class="backup-btn excel-btn" id="exportExcelBtn">📊 Excel / E-Tablo Aktar</button>
+      <div class="backup-btn-group">
+        <button class="backup-btn" id="exportBtn">⬇ JSON Yedek Al</button>
+        <button class="backup-btn" id="importBtn">⬆ Yedek Yükle</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
       <button class="backup-btn" id="logoutBtn" style="background:var(--danger); color:#fff; margin-top:8px;">🚪 Oturumu Kapat</button>
     </div>
   </div>
 
-  <!-- CONFIRM & EDIT MODALS -->
+  <!-- RINGING SCREEN -->
+  <div id="ringingModal" class="ringing-modal hidden">
+    <div class="bell">🔔</div>
+    <div class="rtitle">Hatırlatma!</div>
+    <div class="rtext" id="ringingTaskText">-</div>
+    <button id="stopRingBtn">Durdur</button>
+  </div>
+
+  <!-- CUSTOM CONFIRM -->
   <div id="confirmModal" class="alarm-modal hidden">
     <div class="alarm-sheet">
       <h3 id="confirmText" style="margin-bottom:16px;">Emin misin?</h3>
@@ -445,6 +524,7 @@
     </div>
   </div>
 
+  <!-- İÇERİK GÖRÜNTÜLE / DÜZENLE / SİL MODALİ -->
   <div id="editRowModal" class="alarm-modal hidden">
     <div class="alarm-sheet">
       <h3 id="editRowModalTitle">Düzenle</h3>
@@ -538,7 +618,7 @@
     }
   });
 
-  let cloudState = { templates: [], notes: [], agendaList: [], calcList: [], stats: {}, records: {}, customTasks: {}, theme: 'dark', alarmsEnabled: false, alarmTimes: ['08:00','15:00','22:00'] };
+  let cloudState = { records: {}, customTasks: {} };
 
   function listenToUserData(){
     if(!currentUser) return;
@@ -555,16 +635,19 @@
           stats = profData.stats || {};
           cloudState.records = profData.records || {};
           cloudState.customTasks = profData.customTasks || {};
-          if(profData.theme) setTheme(profData.theme);
-          if(profData.alarmsEnabled !== undefined){
-            document.getElementById('threeAlarmsToggle').checked = profData.alarmsEnabled;
+          if(profData.theme) applyTheme(profData.theme);
+          if(profData.auto3Alarms !== undefined){
+            auto3Alarms = profData.auto3Alarms;
+            document.getElementById('threeAlarmsToggle').checked = auto3Alarms;
           }
-          if(profData.alarmTimes){
-            document.getElementById('autoAlarmTime0').value = profData.alarmTimes[0] || '08:00';
-            document.getElementById('autoAlarmTime1').value = profData.alarmTimes[1] || '15:00';
-            document.getElementById('autoAlarmTime2').value = profData.alarmTimes[2] || '22:00';
+          if(profData.autoAlarmTimes && Array.isArray(profData.autoAlarmTimes)){
+            autoAlarmTimes = profData.autoAlarmTimes;
+            autoAlarmTimes.forEach((t, i) => {
+              const el = document.getElementById('autoAlarmTime'+i);
+              if(el) el.value = String(t.h).padStart(2,'0') + ':' + String(t.m).padStart(2,'0');
+            });
           }
-          renderCurrentScreen();
+          goToDate(currentDate);
         }
       } else {
         syncToCloud();
@@ -576,12 +659,6 @@
     if(!currentUser) return;
     const userDocRef = db.collection("users").doc(currentUser.uid);
     const payload = {};
-    const alarmsEnabled = document.getElementById('threeAlarmsToggle').checked;
-    const alarmTimes = [
-      document.getElementById('autoAlarmTime0').value,
-      document.getElementById('autoAlarmTime1').value,
-      document.getElementById('autoAlarmTime2').value
-    ];
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
 
     payload[activeProfile] = {
@@ -593,15 +670,10 @@
       records: cloudState.records,
       customTasks: cloudState.customTasks,
       theme: currentTheme,
-      alarmsEnabled,
-      alarmTimes
+      auto3Alarms,
+      autoAlarmTimes
     };
     await userDocRef.set(payload, { merge: true });
-  }
-
-  function renderCurrentScreen(){
-    if(!mainArea) return;
-    goToDate(currentDate);
   }
 
   const mainArea = document.getElementById('mainArea');
@@ -669,6 +741,7 @@
   let selectedWeekday = new Date().getDay();
   let stats = {};
   let calViewYear, calViewMonth;
+  let auto3Alarms = false;
 
   let activeProfile = 'emre';
   const PROFILES = [
@@ -706,6 +779,19 @@
 
   async function loadRecord(dateStr){ return cloudState.records[dateStr] || null; }
   async function loadCustom(dateStr){ return cloudState.customTasks[dateStr] || []; }
+
+  let autoAlarmTimes = [{h:8,m:0}, {h:15,m:0}, {h:22,m:0}];
+  async function saveAutoAlarmTimes(){ await syncToCloud(); }
+  [0,1,2].forEach(i => {
+    const el = document.getElementById('autoAlarmTime'+i);
+    if(el) el.addEventListener('change', async (e) => {
+      const parts = (e.target.value || '').split(':');
+      const hh = parseInt(parts[0], 10), mm = parseInt(parts[1], 10);
+      if(isNaN(hh) || isNaN(mm)) return;
+      autoAlarmTimes[i] = {h:hh, m:mm};
+      await saveAutoAlarmTimes();
+    });
+  });
 
   function renderDateHeader(){
     const d = new Date(currentDate+'T00:00:00');
@@ -830,10 +916,10 @@
     templates.filter(t => taskAppliesToDate(t, dObj)).forEach(t => {
       const type = t.type || 'daily';
       items.push({kind:'template', id:t.id, text:t.text, subtitle: recurrenceSuffix(t).replace(/^ · /,''), rawText:t.text,
-        tplType:type, priority: PRIORITY[type], done: !!currentRecord[t.id], editable: isToday()});
+        tplType:type, priority: PRIORITY[type], done: !!currentRecord[t.id], editable: isToday(), alarm: t.alarm || null});
     });
     customTasks.forEach(c => items.push({kind:'custom', id:c.id, text:c.text, subtitle:'Bu güne özel', rawText:c.text,
-      priority: PRIORITY.custom, done: !!c.done, editable: true}));
+      priority: PRIORITY.custom, done: !!c.done, editable: true, alarm: c.alarm || null}));
 
     if(items.length === 0){
       const emptyMsg = document.createElement('div');
@@ -906,6 +992,30 @@
     text.addEventListener('click', () => openItemEditor(item.kind === 'template' ? 'template' : 'custom', item.id, editorTitle, item.editable));
     row.appendChild(check); row.appendChild(text);
 
+    const muteBtn = document.createElement('button');
+    muteBtn.className = 'row-alarm-btn';
+    const alarm = item.alarm;
+    if(alarm){
+      muteBtn.textContent = alarm.enabled !== false ? '🔔' : '🔕';
+      muteBtn.classList.toggle('is-active', alarm.enabled !== false);
+    } else {
+      muteBtn.textContent = '⏰';
+      muteBtn.classList.add('is-empty');
+    }
+    let pressTimer = null, longPressed = false;
+    muteBtn.addEventListener('pointerdown', () => { longPressed = false; pressTimer = setTimeout(() => { longPressed = true; openAlarmEditor(item); }, 480); });
+    const cancelPress = () => clearTimeout(pressTimer);
+    muteBtn.addEventListener('pointerup', async () => {
+      cancelPress();
+      if(longPressed) return;
+      if(alarm){
+        const obj = findItemContainer(item);
+        if(obj && obj.alarm){ obj.alarm.enabled = !(obj.alarm.enabled !== false); await persistItem(item); renderList(); }
+      } else { openAlarmEditor(item); }
+    });
+    muteBtn.addEventListener('pointerleave', cancelPress);
+    row.appendChild(muteBtn);
+
     if(editable){
       const del = document.createElement('button');
       del.className='del-btn'; del.textContent='✕';
@@ -933,6 +1043,7 @@
   async function goToDate(dateStr){
     currentDate = dateStr;
     renderDateHeader();
+    mainArea.innerHTML = '<div class="loading">Yükleniyor...</div>';
     const dObj = new Date(currentDate+'T00:00:00');
     const applicable = templates.filter(t => taskAppliesToDate(t, dObj));
     let rec = await loadRecord(currentDate);
@@ -1016,13 +1127,18 @@
       const colDesc = document.createElement('div');
       colDesc.className = 'agenda-col-desc';
       colDesc.textContent = item.text;
+      colDesc.title = "Büyütmek / düzenlemek için dokunun";
       colDesc.addEventListener('click', () => openItemEditor('agenda', item.id, '📖 Ajanda · ' + (item.dateLabel || item.dateStr), true));
 
       const colRight = document.createElement('div');
       colRight.className = 'agenda-col-right';
 
+      const editBtn = document.createElement('button');
+      editBtn.className = 'edit-btn'; editBtn.textContent = '✏️'; editBtn.title = "Düzenle";
+      editBtn.addEventListener('click', () => openItemEditor('agenda', item.id, '📖 Ajanda · ' + (item.dateLabel || item.dateStr), true));
+
       const delBtn = document.createElement('button');
-      delBtn.className = 'del-btn'; delBtn.textContent = '✕';
+      delBtn.className = 'del-btn'; delBtn.textContent = '✕'; delBtn.title = "Sil";
       delBtn.addEventListener('click', async () => {
         if(await showConfirm('Bu ajanda satırını silmek istiyor musun?')){
           agendaList = agendaList.filter(a => a.id !== item.id);
@@ -1031,6 +1147,7 @@
         }
       });
 
+      colRight.appendChild(editBtn);
       colRight.appendChild(delBtn);
       row.appendChild(colDate);
       row.appendChild(colDesc);
@@ -1066,7 +1183,7 @@
     calcListEl.innerHTML = '';
     let total = 0;
     if(calcList.length === 0){
-      calcListEl.innerHTML = '<div class="empty-msg">Henüz hesap kaydı yok.</div>';
+      calcListEl.innerHTML = '<div class="empty-msg">Henüz hesap kaydı yok.<br>Aşağıdan harcama veya gelir ekleyin.</div>';
     } else {
       calcList.slice().reverse().forEach(item => {
         total += item.amount;
@@ -1080,6 +1197,7 @@
         const colDesc = document.createElement('div');
         colDesc.className = 'calc-col-desc';
         colDesc.textContent = item.desc;
+        colDesc.title = "Büyütmek / düzenlemek için dokunun";
         colDesc.addEventListener('click', () => openItemEditor('calc', item.id, '💳 Hesap · ' + (item.dateLabel || item.dateStr), true));
         
         const colRight = document.createElement('div');
@@ -1154,78 +1272,58 @@
   document.getElementById('calPrevMonth').addEventListener('click', () => { calViewMonth--; if(calViewMonth<0){calViewMonth=11; calViewYear--;} renderCalendar(); });
   document.getElementById('calNextMonth').addEventListener('click', () => { calViewMonth++; if(calViewMonth>11){calViewMonth=0; calViewYear++;} renderCalendar(); });
 
-  /* VERİLERİM / İSTATİSTİK / TEMA / ALARMLAR */
-  function renderStats(){
-    statsList.innerHTML = '';
+  document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); statsOverlay.classList.remove('hidden'); });
+  document.getElementById('statsCloseBtn').addEventListener('click', () => statsOverlay.classList.add('hidden'));
+
+  /* VERİLERİM / RUTİN TAKİP ORANLARI */
+  async function computeRoutineStats(t){
+    const startStr = t.createdDate || todayStr();
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(todayStr() + 'T00:00:00');
+    if(isNaN(start.getTime()) || start > end) return {done:0, total:0};
+    let total = 0, done = 0;
+    let cur = new Date(start);
+    while(cur <= end){
+      if(taskAppliesToDate(t, cur)){
+        total++;
+        const rec = await loadRecord(fmt(cur));
+        if(rec && rec[t.id]) done++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return {done, total};
+  }
+
+  async function renderStats(){
     if(templates.length === 0){
-      statsList.innerHTML = '<div class="empty-msg">Henüz kayıtlı rutin yok.</div>';
+      statsList.innerHTML = '<div class="empty-msg">Henüz rutin eklenmedi.</div>';
       return;
     }
-    templates.forEach(t => {
-      const count = stats[t.id] || 0;
-      const row = document.createElement('div');
-      row.className = 'stat-row-item';
-      
-      const top = document.createElement('div');
-      top.className = 'stat-row-top';
-      
-      const txt = document.createElement('div');
-      txt.className = 'stat-row-text';
-      txt.textContent = t.text;
-      
-      const ratio = document.createElement('div');
-      ratio.className = 'stat-row-ratio';
-      ratio.textContent = count + ' defa';
-      
+    statsList.innerHTML = '<div class="empty-msg">Hesaplanıyor...</div>';
+    const rows = [];
+    for(const t of templates){
+      const r = await computeRoutineStats(t);
+      rows.push({text: t.text, subtitle: recurrenceSuffix(t).replace(/^ · /,''), done: r.done, total: r.total});
+    }
+    rows.sort((a,b) => (b.total ? b.done/b.total : 0) - (a.total ? a.done/a.total : 0));
+    statsList.innerHTML = '';
+    rows.forEach(r => {
+      const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
+      const row = document.createElement('div'); row.className = 'stat-row-item';
+      const top = document.createElement('div'); top.className = 'stat-row-top';
+      const txt = document.createElement('div'); txt.className = 'stat-row-text';
+      txt.textContent = r.text + (r.subtitle ? ' · ' + r.subtitle : '');
+      const ratio = document.createElement('div'); ratio.className = 'stat-row-ratio';
+      ratio.textContent = `${r.done}/${r.total}  (%${pct})`;
       top.appendChild(txt); top.appendChild(ratio);
-      
-      const barBg = document.createElement('div');
-      barBg.className = 'stat-row-barbg';
-      const barFill = document.createElement('div');
-      barFill.className = 'stat-row-barfill';
-      barFill.style.width = Math.min(count * 5, 100) + '%';
-      
-      barBg.appendChild(barFill);
-      row.appendChild(top); row.appendChild(barBg);
+      const barbg = document.createElement('div'); barbg.className = 'stat-row-barbg';
+      const barfill = document.createElement('div'); barfill.className = 'stat-row-barfill';
+      barfill.style.width = pct + '%';
+      barbg.appendChild(barfill);
+      row.appendChild(top); row.appendChild(barbg);
       statsList.appendChild(row);
     });
   }
-
-  function setTheme(tName){
-    document.documentElement.setAttribute('data-theme', tName);
-    Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => {
-      btn.classList.toggle('sel', btn.dataset.theme === tName);
-    });
-  }
-
-  Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const t = btn.dataset.theme;
-      setTheme(t);
-      await syncToCloud();
-    });
-  });
-
-  document.getElementById('threeAlarmsToggle').addEventListener('change', async () => { await syncToCloud(); });
-  ['autoAlarmTime0','autoAlarmTime1','autoAlarmTime2'].forEach(id => {
-    document.getElementById(id).addEventListener('change', async () => { await syncToCloud(); });
-  });
-
-  document.getElementById('exportExcelBtn').addEventListener('click', () => {
-    let csv = "Tür,Tarih/Etiket,Açıklama,Tutar/Durum\n";
-    agendaList.forEach(a => { csv += `Ajanda,${a.dateLabel || a.dateStr},"${a.text.replace(/"/g,'""')}",-\n`; });
-    calcList.forEach(c => { csv += `Hesap,${c.dateLabel || c.dateStr},"${c.desc.replace(/"/g,'""')}",${c.amount} TL\n`; });
-    notes.forEach(n => { csv += `Not,-,"${n.text.replace(/"/g,'""')}",${n.done ? 'Tamamlandı' : 'Bekliyor'}\n`; });
-    
-    const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `rutin_takip_yedek_${todayStr()}.csv`;
-    link.click();
-  });
-
-  document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); statsOverlay.classList.remove('hidden'); });
-  document.getElementById('statsCloseBtn').addEventListener('click', () => statsOverlay.classList.add('hidden'));
 
   /* SÜREKLİ NOTLAR */
   const notesOverlay = document.getElementById('notesOverlay');
@@ -1258,6 +1356,178 @@
   async function addNote(){ const val = newNoteInput.value.trim(); if(!val) return; notes.push({id:'n_'+Date.now(), text:val, done:false}); await saveNotes(); resetComposeField(newNoteInput); renderNotes(); }
   document.getElementById('addNoteBtn').addEventListener('click', addNote);
   wireComposeField(newNoteInput, addNote);
+
+  /* EXCEL AKTARIMI */
+  document.getElementById('exportExcelBtn').addEventListener('click', () => {
+    let excelXML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>`;
+    
+    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Ajanda</x:Name><x:WorksheetSource HRef="#sheet0"/></x:ExcelWorksheet>`;
+    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Hesap</x:Name><x:WorksheetSource HRef="#sheet1"/></x:ExcelWorksheet>`;
+    excelXML += `<x:ExcelWorksheet><x:Name>Sürekli Notlar</x:Name><x:WorksheetSource HRef="#sheet2"/></x:ExcelWorksheet>`;
+    excelXML += `<x:ExcelWorksheet><x:Name>Rutinler ve Görevler</x:Name><x:WorksheetSource HRef="#sheet3"/></x:ExcelWorksheet>`;
+    
+    excelXML += `</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>`;
+    
+    excelXML += `<table id="sheet0" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Ajanda Notları</th><th style="background:#132540;color:#fff;">Tutar</th></tr>`;
+    agendaList.forEach(a => {
+      excelXML += `<tr><td>${a.dateLabel || a.dateStr}</td><td>${a.text}</td><td></td></tr>`;
+    });
+    excelXML += `</table>`;
+
+    excelXML += `<table id="sheet1" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Açıklama</th><th style="background:#132540;color:#fff;">Tutar (TL)</th></tr>`;
+    calcList.forEach(c => {
+      excelXML += `<tr><td>${c.dateLabel || c.dateStr}</td><td>${c.desc}</td><td>${c.amount}</td></tr>`;
+    });
+    excelXML += `</table>`;
+
+    excelXML += `<table id="sheet2" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Not Metni</th><th style="background:#132540;color:#fff;">Durum</th></tr>`;
+    notes.forEach(n => { excelXML += `<tr><td>-</td><td>${n.text}</td><td>${n.done ? 'Tamamlandı' : 'Bekliyor'}</td></tr>`; });
+    excelXML += `</table>`;
+
+    excelXML += `<table id="sheet3" border="1"><tr><th style="background:#132540;color:#fff;">Başlangıç Tarihi</th><th style="background:#132540;color:#fff;">Görev Açıklaması</th><th style="background:#132540;color:#fff;">Tekrar Türü</th></tr>`;
+    templates.forEach(t => { excelXML += `<tr><td>${t.createdDate || '-'}</td><td>${t.text}</td><td>${t.type}</td></tr>`; });
+    excelXML += `</table></body></html>`;
+
+    const blob = new Blob([excelXML], {type: 'application/vnd.ms-excel'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Gunluk-Gorevler-Verileri-${activeProfile}-${todayStr()}.xls`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const backup = { profile: activeProfile, templates, stats, notes, agendaList, calcList, auto3Alarms, autoAlarmTimes, records: cloudState.records, customTasks: cloudState.customTasks };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `gunluk-gorevler-yedek-${activeProfile}-${todayStr()}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!await showConfirm('Mevcut veriler yedekteki verilerle değiştirilecek. Emin misin?')) return;
+        templates = data.templates || []; stats = data.stats || {}; notes = data.notes || [];
+        agendaList = data.agendaList || []; calcList = data.calcList || []; auto3Alarms = !!data.auto3Alarms;
+        autoAlarmTimes = data.autoAlarmTimes || autoAlarmTimes;
+        cloudState.records = data.records || {};
+        cloudState.customTasks = data.customTasks || {};
+        await syncToCloud();
+        alert('Yedek yüklendi.'); location.reload();
+      }catch(err){ alert('Geçersiz dosya.'); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  });
+
+  /* ALARM SİSTEMİ */
+  document.getElementById('threeAlarmsToggle').addEventListener('change', async (e) => {
+    auto3Alarms = e.target.checked;
+    await syncToCloud();
+  });
+
+  let customSoundDataUrl = null; let audioCtx = null; let ringingInterval = null; let ringingAudioEl = null; let selectedSound = 'classic';
+
+  const alarmHour = document.getElementById('alarmHour');
+  const alarmMinute = document.getElementById('alarmMinute');
+  const alarmModal = document.getElementById('alarmModal');
+  const soundList = document.getElementById('soundList');
+  const customSoundLabel = document.getElementById('customSoundLabel');
+  const soundFileInput = document.getElementById('soundFile');
+  const ringingModal = document.getElementById('ringingModal');
+  const ringingTaskText = document.getElementById('ringingTaskText');
+
+  function getAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+  function beep(freq, startTime, duration, type){
+    const ctxA = getAudioCtx(); const osc = ctxA.createOscillator(); const gain = ctxA.createGain();
+    osc.type = type || 'sine'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, startTime); gain.gain.exponentialRampToValueAtTime(0.35, startTime+0.02); gain.gain.exponentialRampToValueAtTime(0.0001, startTime+duration);
+    osc.connect(gain); gain.connect(ctxA.destination); osc.start(startTime); osc.stop(startTime+duration+0.02);
+  }
+  function playPreset(id){
+    const ctxA = getAudioCtx(); const now = ctxA.currentTime;
+    if(id === 'classic'){ beep(880, now, 0.15,'sine'); beep(880, now+0.25, 0.15,'sine'); beep(1046, now+0.5, 0.25,'sine'); }
+    else if(id === 'soft'){ beep(523, now, 0.4,'sine'); beep(659, now+0.35, 0.5,'sine'); }
+    else if(id === 'urgent'){ for(let i=0;i<6;i++){ beep(1200, now+i*0.18, 0.1,'square'); } }
+  }
+
+  document.getElementById('uploadSoundBtn').addEventListener('click', () => soundFileInput.click());
+  soundFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    if(file.size > 8*1024*1024){ alert('Ses dosyası 8MB altında olmalıdır.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => { customSoundDataUrl = reader.result; customSoundLabel.textContent = '🎵 Yüklü Ses Kullanılıyor'; selectSound('custom'); };
+    reader.readAsDataURL(file);
+  });
+
+  function selectSound(id){ selectedSound = id; Array.from(soundList.children).forEach(opt => { opt.classList.toggle('sel', opt.dataset.sound === id); const radio = opt.querySelector('input[type=radio]'); if(radio) radio.checked = (opt.dataset.sound === id); }); }
+  Array.from(soundList.children).forEach(opt => opt.addEventListener('click', (e) => { if(e.target.tagName !== 'BUTTON') selectSound(opt.dataset.sound); }));
+  Array.from(document.querySelectorAll('[data-preview]')).forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); playPreset(btn.dataset.preview); }));
+
+  let editingItem = null;
+  function findItemContainer(item){ if(item.kind === 'template') return templates.find(t => t.id === item.id); if(item.kind === 'note') return notes.find(n => n.id === item.id); return customTasks.find(c => c.id === item.id); }
+  async function persistItem(item){ if(item.kind === 'template') await saveTemplates(); else if(item.kind === 'note') await saveNotes(); else await saveCustom(currentDate, customTasks); }
+
+  function openAlarmEditor(item){ editingItem = item; const obj = findItemContainer(item); const alarm = obj && obj.alarm; document.getElementById('alarmSheetTitle').textContent = 'Alarm — ' + item.rawText; alarmHour.value = alarm ? alarm.hour : 8; alarmMinute.value = alarm ? alarm.minute : 0; selectSound(alarm ? alarm.soundId : 'classic'); document.getElementById('alarmRemoveBtn').style.display = alarm ? 'block' : 'none'; alarmModal.classList.remove('hidden'); }
+  function closeAlarmEditor(){ alarmModal.classList.add('hidden'); editingItem = null; }
+
+  document.getElementById('alarmCancelBtn').addEventListener('click', closeAlarmEditor);
+  document.getElementById('alarmSaveBtn').addEventListener('click', async () => {
+    if(!editingItem) return;
+    let h = parseInt(alarmHour.value,10), m = parseInt(alarmMinute.value,10);
+    if(isNaN(h) || h<0 || h>23 || isNaN(m) || m<0 || m>59){ alert('Geçerli bir saat girin.'); return; }
+    const obj = findItemContainer(editingItem); if(!obj) return;
+    obj.alarm = { hour:h, minute:m, soundId:selectedSound, enabled:true, lastRungDate:null };
+    await persistItem(editingItem); closeAlarmEditor(); renderList();
+  });
+  document.getElementById('alarmRemoveBtn').addEventListener('click', async () => { if(!editingItem) return; const obj = findItemContainer(editingItem); if(obj){ delete obj.alarm; await persistItem(editingItem); } closeAlarmEditor(); renderList(); });
+
+  let autoAlarmLastRung = {};
+  async function checkAlarms(){
+    if(!ringingModal.classList.contains('hidden')) return;
+    const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const todayS = todayStr();
+    if(auto3Alarms){
+      for(let idx=0; idx<autoAlarmTimes.length; idx++){
+        const targetH = autoAlarmTimes[idx].h, targetM = autoAlarmTimes[idx].m;
+        const key = `${todayS}_${idx}_${targetH}_${targetM}`;
+        if(h === targetH && m === targetM && !autoAlarmLastRung[key]){ autoAlarmLastRung[key] = true; triggerRing("Kontrol Zamanı! Görevlerini ve ajandanı kontrol et.", "classic", false); return; }
+      }
+    }
+    const nowMinutes = h*60 + m; const list = []; const dObj = new Date();
+    templates.filter(t => t.alarm && taskAppliesToDate(t, dObj)).forEach(t => list.push({text:t.text, alarm:t.alarm, obj:t, kind:'template'}));
+    if(currentDate === todayS){ customTasks.filter(c => c.alarm).forEach(c => list.push({text:c.text, alarm:c.alarm, obj:c, kind:'custom'})); }
+    for(const c of list){
+      if(c.alarm.enabled === false) continue;
+      const alarmMinutes = c.alarm.hour*60 + c.alarm.minute;
+      if(nowMinutes >= alarmMinutes && c.alarm.lastRungDate !== todayS){
+        c.obj.alarm.lastRungDate = todayS;
+        if(c.kind === 'template') await saveTemplates(); else await saveCustom(currentDate, customTasks);
+        triggerRing(c.text, c.alarm.soundId, nowMinutes > alarmMinutes); break;
+      }
+    }
+  }
+  setInterval(checkAlarms, 15000);
+
+  function triggerRing(text, soundId, missed){
+    document.querySelector('.ringing-modal .rtitle').textContent = missed ? '⏰ Kaçırdığın Hatırlatma' : 'Hatırlatma!';
+    ringingTaskText.textContent = text; ringingModal.classList.remove('hidden');
+    if(navigator.vibrate) navigator.vibrate([400,200,400,200,400]);
+    if(soundId === 'custom' && customSoundDataUrl){ ringingAudioEl = new Audio(customSoundDataUrl); ringingAudioEl.loop = true; ringingAudioEl.play().catch(()=>{}); }
+    else { playPreset(soundId); ringingInterval = setInterval(() => playPreset(soundId), 1400); }
+  }
+  function stopRing(){ ringingModal.classList.add('hidden'); if(ringingInterval){ clearInterval(ringingInterval); ringingInterval = null; } if(ringingAudioEl){ ringingAudioEl.pause(); ringingAudioEl = null; } }
+  document.getElementById('stopRingBtn').addEventListener('click', stopRing);
+
+  /* TEMA VEYA PROFİL */
+  function applyTheme(id){ document.documentElement.setAttribute('data-theme', id); Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => btn.classList.toggle('sel', btn.dataset.theme === id)); }
+  Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => btn.addEventListener('click', async () => { applyTheme(btn.dataset.theme); await syncToCloud(); }));
 
   function updateProfileUI(){ const p = PROFILES.find(x => x.id === activeProfile) || PROFILES[0]; document.getElementById('profileBtn').textContent = p.icon + ' ' + p.label; }
   document.getElementById('profileBtn').addEventListener('click', async () => {
