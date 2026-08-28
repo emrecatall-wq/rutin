@@ -6,6 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0f1b2b">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
@@ -64,6 +67,15 @@
   html,body{margin:0; padding:0; height:100vh; height:100dvh; width:100vw; background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,Roboto,"Segoe UI",sans-serif; overflow:hidden;}
   #app{position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg); height:100vh; height:100dvh; width:100vw;}
+
+  /* AUTH MODAL & OVERLAY */
+  .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  .auth-box { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .auth-box h2 { margin: 0 0 8px; text-align: center; color: var(--accent); font-size: 20px; }
+  .auth-box input { background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 12px; font-size: 15px; outline: none; }
+  .auth-box button { background: var(--accent); color: #1a1005; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .auth-box .toggle-auth { background: transparent; color: var(--text-dim); border: none; font-size: 13px; text-decoration: underline; margin-top: 4px; }
+  .auth-error { color: var(--danger); font-size: 12px; text-align: center; display: none; }
 
   header{flex:0 0 auto; background:var(--bg2); border-bottom:2px solid var(--line);
     padding:10px 8px 8px; padding-top:calc(10px + env(safe-area-inset-top));}
@@ -178,7 +190,6 @@
   .tag-custom{color:var(--custom); font-size:11px; margin-right:4px; font-weight:700;}
   .loading{display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-dim); font-size:14px;}
 
-  /* DİNAMİK MOBİL VE TABLET PENCERE DÜZENLERİ (TAM EKRAN UYUMLU) */
   .overlay{position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; background:var(--bg); z-index:50; display:flex; flex-direction:column; overflow:hidden;}
   .overlay.hidden{display:none;}
   .overlay-header{flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -237,7 +248,6 @@
   input:checked + .slider{background-color:var(--accent);}
   input:checked + .slider:before{transform:translateX(20px);}
 
-  /* AJANDA VE HESAP SATIR DÜZENLERİ */
   .agenda-row-item{display:grid; grid-template-columns:80px 1fr auto; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px;}
   .agenda-col-date{font-size:11px; color:var(--accent); font-weight:700;}
   .agenda-col-desc{font-size:14px; font-weight:500; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
@@ -255,7 +265,6 @@
   .calc-val-badge.plus{color:#fff; background:var(--done);}
   .calc-val-badge.minus{color:#fff; background:var(--danger);}
 
-  /* TABLET GENİŞ EKRAN UYARLAMALARI (768px UZERİ) */
   @media(min-width:768px){
     #app, .alarm-sheet{max-width:720px; margin:0 auto; left:50%; transform:translateX(-50%);}
     .overlay{max-width:720px; left:50%; transform:translateX(-50%);}
@@ -263,6 +272,19 @@
 </style>
 </head>
 <body>
+
+<!-- GİRİŞ / KAYIT EKRANI -->
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-box">
+    <h2 id="authTitle">Hesap Girişi</h2>
+    <div id="authError" class="auth-error"></div>
+    <input type="email" id="authEmail" placeholder="E-posta Adresi">
+    <input type="password" id="authPassword" placeholder="Şifre">
+    <button id="authSubmitBtn">Giriş Yap</button>
+    <button id="authToggleBtn" class="toggle-auth">Hesabın yok mu? Kayıt Ol</button>
+  </div>
+</div>
+
 <div id="app">
   <header>
     <div class="top-row">
@@ -285,7 +307,7 @@
     </div>
   </header>
 
-  <main id="mainArea"><div class="loading">Yükleniyor...</div></main>
+  <main id="mainArea"><div class="loading">Giriş bekleniyor...</div></main>
 
   <footer id="footer" style="display:none;">
     <div class="add-mode-row" id="addModeRow">
@@ -453,7 +475,7 @@
       </div>
     </div>
 
-    <div class="section-label" style="margin:4px 12px 0;">Rutin Takip Oranları (başladığın günden bugüne)</div>
+    <div class="section-label" style="margin:4px 12px 0;">Rutin Takip Oranları</div>
     <div class="stats-list" id="statsList"></div>
     <div class="theme-section">
       <h4>🎨 Tema</h4>
@@ -468,11 +490,7 @@
     </div>
     <div class="backup-row">
       <button class="backup-btn excel-btn" id="exportExcelBtn">📊 Excel / E-Tablo Aktar</button>
-      <div class="backup-btn-group">
-        <button class="backup-btn" id="exportBtn">⬇ JSON Yedek Al</button>
-        <button class="backup-btn" id="importBtn">⬆ Yedek Yükle</button>
-      </div>
-      <input type="file" id="importFile" accept="application/json" style="display:none;">
+      <button class="backup-btn" id="logoutBtn" style="background:var(--danger); color:#fff; margin-top:8px;">🚪 Oturumu Kapat</button>
     </div>
   </div>
 
@@ -495,7 +513,7 @@
     </div>
   </div>
 
-  <!-- İÇERİK GÖRÜNTÜLE / DÜZENLE / SİL MODALİ (görevler, ajanda, notlar, hesap için ortak) -->
+  <!-- EDIT MODAL -->
   <div id="editRowModal" class="alarm-modal hidden">
     <div class="alarm-sheet">
       <h3 id="editRowModalTitle">Düzenle</h3>
@@ -509,8 +527,145 @@
   </div>
 </div>
 
+<!-- FIREBASE MODULES -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCt9sgB6vHTThSlu-KBemDkaZmlBkpi1yU",
+    authDomain: "rutin-takip-1d990.firebaseapp.com",
+    projectId: "rutin-takip-1d990",
+    storageBucket: "rutin-takip-1d990.firebasestorage.app",
+    messagingSenderId: "1041733164811",
+    appId: "1:1041733164811:web:e0fb92353748685bfe4c0e",
+    measurementId: "G-7RYZ6TW8PM"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window.fbAuth = auth;
+  window.fbDb = db;
+  window.fbMethods = { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, doc, setDoc, onSnapshot };
+</script>
+
 <script>
 (function(){
+  let currentUser = null;
+  let isSignUpMode = false;
+  let dbUnsubscribe = null;
+
+  const authOverlay = document.getElementById('authOverlay');
+  const authTitle = document.getElementById('authTitle');
+  const authEmail = document.getElementById('authEmail');
+  const authPassword = document.getElementById('authPassword');
+  const authSubmitBtn = document.getElementById('authSubmitBtn');
+  const authToggleBtn = document.getElementById('authToggleBtn');
+  const authError = document.getElementById('authError');
+
+  authToggleBtn.addEventListener('click', () => {
+    isSignUpMode = !isSignUpMode;
+    authTitle.textContent = isSignUpMode ? 'Yeni Hesap Oluştur' : 'Hesap Girişi';
+    authSubmitBtn.textContent = isSignUpMode ? 'Kayıt Ol' : 'Giriş Yap';
+    authToggleBtn.textContent = isSignUpMode ? 'Zaten hesabın var mı? Giriş Yap' : 'Hesabın yok mu? Kayıt Ol';
+    authError.style.display = 'none';
+  });
+
+  authSubmitBtn.addEventListener('click', async () => {
+    const email = authEmail.value.trim();
+    const pass = authPassword.value.trim();
+    if(!email || !pass){ showError('Lütfen e-posta ve şifre girin.'); return; }
+    
+    try {
+      authError.style.display = 'none';
+      if(isSignUpMode){
+        await window.fbMethods.createUserWithEmailAndPassword(window.fbAuth, email, pass);
+      } else {
+        await window.fbMethods.signInWithEmailAndPassword(window.fbAuth, email, pass);
+      }
+    } catch(err) {
+      showError('Hata: ' + (err.message.includes('auth/invalid-credential') ? 'E-posta veya şifre hatalı.' : err.message));
+    }
+  });
+
+  function showError(msg){ authError.textContent = msg; authError.style.display = 'block'; }
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    if(confirm('Oturumu kapatmak istediğinizden emin misiniz?')){
+      window.fbMethods.signOut(window.fbAuth);
+    }
+  });
+
+  function initFirebaseAuth(){
+    const checkInterval = setInterval(() => {
+      if(window.fbAuth){
+        clearInterval(checkInterval);
+        window.fbMethods.onAuthStateChanged(window.fbAuth, (user) => {
+          if(user){
+            currentUser = user;
+            authOverlay.style.display = 'none';
+            listenToUserData();
+          } else {
+            currentUser = null;
+            authOverlay.style.display = 'flex';
+            if(dbUnsubscribe) dbUnsubscribe();
+          }
+        });
+      }
+    }, 100);
+  }
+
+  // CANLI VERİTABANI DİNLEME (FIRESTORE SYNC)
+  let cloudState = { templates: [], notes: [], agendaList: [], calcList: [], stats: {}, records: {}, customTasks: {} };
+
+  function listenToUserData(){
+    if(!currentUser) return;
+    const userDocRef = window.fbMethods.doc(window.fbDb, "users", currentUser.uid);
+    dbUnsubscribe = window.fbMethods.onSnapshot(userDocRef, (docSnap) => {
+      if(docSnap.exists()){
+        const data = docSnap.data();
+        if(data[activeProfile]){
+          const profData = data[activeProfile];
+          templates = profData.templates || [];
+          notes = profData.notes || [];
+          agendaList = profData.agendaList || [];
+          calcList = profData.calcList || [];
+          stats = profData.stats || {};
+          cloudState.records = profData.records || {};
+          cloudState.customTasks = profData.customTasks || {};
+          renderCurrentScreen();
+        }
+      } else {
+        syncToCloud();
+      }
+    });
+  }
+
+  async function syncToCloud(){
+    if(!currentUser) return;
+    const userDocRef = window.fbMethods.doc(window.fbDb, "users", currentUser.uid);
+    const payload = {};
+    payload[activeProfile] = {
+      templates,
+      notes,
+      agendaList,
+      calcList,
+      stats,
+      records: cloudState.records,
+      customTasks: cloudState.customTasks
+    };
+    await window.fbMethods.setDoc(userDocRef, payload, { merge: true });
+  }
+
+  function renderCurrentScreen(){
+    if(!mainArea) return;
+    goToDate(currentDate);
+  }
+
+  // UYGULAMA MEVCUT DEĞİŞKENLERİ
   const mainArea = document.getElementById('mainArea');
   const footer = document.getElementById('footer');
   const lockedNote = document.getElementById('lockedNote');
@@ -544,13 +699,11 @@
   }
   function todayStr(){ return fmt(new Date()); }
 
-  // Metin girilen kutular istediğiniz kadar uzun metin alabilsin diye otomatik büyüyen textarea davranışı
   function autoGrow(el){
     if(!el) return;
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
-  // Düzenleme/görüntüleme sayfası için üst sınır yok — metin tamamen açılsın, kaydırmaya gerek kalmasın
   function autoGrowFull(el){
     if(!el) return;
     el.style.height = 'auto';
@@ -580,35 +733,11 @@
   let calViewYear, calViewMonth;
   let auto3Alarms = false;
 
-  const STORAGE_PREFIX = 'gunluk_gorevler_';
   let activeProfile = 'emre';
   const PROFILES = [
     {id:'emre', label:'Emre', icon:'👤'},
     {id:'is', label:'İş', icon:'🛠️'}
   ];
-
-  function rawGet(key){ try{ return localStorage.getItem(STORAGE_PREFIX+key); }catch(e){ return null; } }
-  function rawSet(key, value){ try{ localStorage.setItem(STORAGE_PREFIX+key, value); }catch(e){} }
-  function scopedKeyPrefix(){ return STORAGE_PREFIX + activeProfile + ':'; }
-
-  async function migrateToProfiles(){
-    const done = await rawGet('profiles_migrated');
-    if(done === 'yes'){ activeProfile = (await rawGet('active_profile')) || 'emre'; return; }
-    const toCopy = [];
-    for(let i=0; i<localStorage.length; i++){
-      const key = localStorage.key(i);
-      if(key && key.startsWith(STORAGE_PREFIX)){
-        const suffix = key.substring(STORAGE_PREFIX.length);
-        if(suffix === 'active_profile' || suffix === 'profiles_migrated') continue;
-        if(suffix.startsWith('emre:') || suffix.startsWith('is:')) continue;
-        toCopy.push({suffix, value: localStorage.getItem(key)});
-      }
-    }
-    toCopy.forEach(({suffix, value}) => localStorage.setItem(STORAGE_PREFIX + 'emre:' + suffix, value));
-    activeProfile = 'emre';
-    await rawSet('active_profile', 'emre');
-    await rawSet('profiles_migrated', 'yes');
-  }
 
   function showConfirm(message){
     return new Promise((resolve) => {
@@ -629,51 +758,17 @@
       noBtn.addEventListener('click', onNo);
     });
   }
-  async function safeGet(key){ try{ return localStorage.getItem(scopedKeyPrefix()+key); }catch(e){ return null; } }
-  async function safeSet(key, value){ try{ localStorage.setItem(scopedKeyPrefix()+key, value); }catch(e){ console.error('storage set failed', e); } }
 
-  async function loadTemplates(){ const raw = await safeGet('templates'); templates = raw ? (JSON.parse(raw) || []) : []; }
-  async function saveTemplates(){ await safeSet('templates', JSON.stringify(templates)); }
+  async function saveTemplates(){ await syncToCloud(); }
+  async function saveNotes(){ await syncToCloud(); }
+  async function saveAgendaList(){ await syncToCloud(); }
+  async function saveCalcList(){ await syncToCloud(); }
+  async function saveStats(){ await syncToCloud(); }
+  async function saveRecord(dateStr, record){ cloudState.records[dateStr] = record; await syncToCloud(); }
+  async function saveCustom(dateStr, list){ cloudState.customTasks[dateStr] = list; await syncToCloud(); }
 
-  async function loadNotes(){ const raw = await safeGet('notes'); notes = raw ? (JSON.parse(raw) || []) : []; }
-  async function saveNotes(){ await safeSet('notes', JSON.stringify(notes)); }
-
-  async function loadAgendaList(){ const raw = await safeGet('agenda_list'); agendaList = raw ? (JSON.parse(raw) || []) : []; }
-  async function saveAgendaList(){ await safeSet('agenda_list', JSON.stringify(agendaList)); }
-
-  async function loadCalcList(){ const raw = await safeGet('calc_list'); calcList = raw ? (JSON.parse(raw) || []) : []; }
-  async function saveCalcList(){ await safeSet('calc_list', JSON.stringify(calcList)); }
-
-  async function loadAutoAlarmsState(){ const raw = await safeGet('auto_3_alarms'); auto3Alarms = raw === 'yes'; document.getElementById('threeAlarmsToggle').checked = auto3Alarms; }
-
-  let autoAlarmTimes = [{h:8,m:0}, {h:15,m:0}, {h:22,m:0}];
-  async function loadAutoAlarmTimes(){
-    const raw = await safeGet('auto_alarm_times');
-    if(raw){ try{ const parsed = JSON.parse(raw); if(Array.isArray(parsed) && parsed.length === 3) autoAlarmTimes = parsed; }catch(e){} }
-    autoAlarmTimes.forEach((t, i) => {
-      const el = document.getElementById('autoAlarmTime'+i);
-      if(el) el.value = String(t.h).padStart(2,'0') + ':' + String(t.m).padStart(2,'0');
-    });
-  }
-  async function saveAutoAlarmTimes(){ await safeSet('auto_alarm_times', JSON.stringify(autoAlarmTimes)); }
-  [0,1,2].forEach(i => {
-    const el = document.getElementById('autoAlarmTime'+i);
-    if(el) el.addEventListener('change', async (e) => {
-      const parts = (e.target.value || '').split(':');
-      const hh = parseInt(parts[0], 10), mm = parseInt(parts[1], 10);
-      if(isNaN(hh) || isNaN(mm)) return;
-      autoAlarmTimes[i] = {h:hh, m:mm};
-      await saveAutoAlarmTimes();
-    });
-  });
-  async function loadStats(){ const raw = await safeGet('stats'); stats = raw ? (JSON.parse(raw) || {}) : {}; }
-  async function saveStats(){ await safeSet('stats', JSON.stringify(stats)); }
-
-  async function loadRecord(dateStr){ const raw = await safeGet('day:'+dateStr); return raw ? JSON.parse(raw) : null; }
-  async function saveRecord(dateStr, record){ await safeSet('day:'+dateStr, JSON.stringify(record)); }
-
-  async function loadCustom(dateStr){ const raw = await safeGet('custom:'+dateStr); return raw ? (JSON.parse(raw) || []) : []; }
-  async function saveCustom(dateStr, list){ await safeSet('custom:'+dateStr, JSON.stringify(list)); }
+  async function loadRecord(dateStr){ return cloudState.records[dateStr] || null; }
+  async function loadCustom(dateStr){ return cloudState.customTasks[dateStr] || []; }
 
   function renderDateHeader(){
     const d = new Date(currentDate+'T00:00:00');
@@ -697,14 +792,13 @@
     return '';
   }
 
-  /* ---------- İÇERİK GÖRÜNTÜLE / DÜZENLE / SİL — TÜM LİSTELER İÇİN ORTAK ---------- */
   const editRowModal = document.getElementById('editRowModal');
   const editRowInput = document.getElementById('editRowInput');
   const editRowModalTitle = document.getElementById('editRowModalTitle');
   const editRowSaveBtn = document.getElementById('editRowSaveBtn');
   const editRowDeleteBtn = document.getElementById('editRowDeleteBtn');
   const editRowCancelBtn = document.getElementById('editRowCancelBtn');
-  let editingCtx = null; // {type, id, editable}
+  let editingCtx = null;
 
   function findEditable(type, id){
     if(type === 'template') return templates.find(t => t.id === id);
@@ -875,30 +969,6 @@
     text.addEventListener('click', () => openItemEditor(item.kind === 'template' ? 'template' : 'custom', item.id, editorTitle, item.editable));
     row.appendChild(check); row.appendChild(text);
 
-    const muteBtn = document.createElement('button');
-    muteBtn.className = 'row-alarm-btn';
-    const alarm = item.alarm;
-    if(alarm){
-      muteBtn.textContent = alarm.enabled !== false ? '🔔' : '🔕';
-      muteBtn.classList.toggle('is-active', alarm.enabled !== false);
-    } else {
-      muteBtn.textContent = '⏰';
-      muteBtn.classList.add('is-empty');
-    }
-    let pressTimer = null, longPressed = false;
-    muteBtn.addEventListener('pointerdown', () => { longPressed = false; pressTimer = setTimeout(() => { longPressed = true; openAlarmEditor(item); }, 480); });
-    const cancelPress = () => clearTimeout(pressTimer);
-    muteBtn.addEventListener('pointerup', async () => {
-      cancelPress();
-      if(longPressed) return;
-      if(alarm){
-        const obj = findItemContainer(item);
-        if(obj && obj.alarm){ obj.alarm.enabled = !(obj.alarm.enabled !== false); await persistItem(item); renderList(); }
-      } else { openAlarmEditor(item); }
-    });
-    muteBtn.addEventListener('pointerleave', cancelPress);
-    row.appendChild(muteBtn);
-
     if(editable){
       const del = document.createElement('button');
       del.className='del-btn'; del.textContent='✕';
@@ -926,7 +996,6 @@
   async function goToDate(dateStr){
     currentDate = dateStr;
     renderDateHeader();
-    mainArea.innerHTML = '<div class="loading">Yükleniyor...</div>';
     const dObj = new Date(currentDate+'T00:00:00');
     const applicable = templates.filter(t => taskAppliesToDate(t, dObj));
     let rec = await loadRecord(currentDate);
@@ -988,7 +1057,7 @@
   addBtn.addEventListener('click', addTask);
   wireComposeField(newTaskInput, addTask);
 
-  /* ---------- SATIR SATIR DÜZENLENEBİLİR VE BÜYÜTÜLEBİLİR AJANDA ---------- */
+  /* AJANDA */
   const agendaOverlay = document.getElementById('agendaOverlay');
   const agendaListEl = document.getElementById('agendaList');
   const newAgendaInput = document.getElementById('newAgendaInput');
@@ -1010,18 +1079,13 @@
       const colDesc = document.createElement('div');
       colDesc.className = 'agenda-col-desc';
       colDesc.textContent = item.text;
-      colDesc.title = "Büyütmek / düzenlemek için dokunun";
       colDesc.addEventListener('click', () => openItemEditor('agenda', item.id, '📖 Ajanda · ' + (item.dateLabel || item.dateStr), true));
 
       const colRight = document.createElement('div');
       colRight.className = 'agenda-col-right';
 
-      const editBtn = document.createElement('button');
-      editBtn.className = 'edit-btn'; editBtn.textContent = '✏️'; editBtn.title = "Düzenle";
-      editBtn.addEventListener('click', () => openItemEditor('agenda', item.id, '📖 Ajanda · ' + (item.dateLabel || item.dateStr), true));
-
       const delBtn = document.createElement('button');
-      delBtn.className = 'del-btn'; delBtn.textContent = '✕'; delBtn.title = "Sil";
+      delBtn.className = 'del-btn'; delBtn.textContent = '✕';
       delBtn.addEventListener('click', async () => {
         if(await showConfirm('Bu ajanda satırını silmek istiyor musun?')){
           agendaList = agendaList.filter(a => a.id !== item.id);
@@ -1030,7 +1094,6 @@
         }
       });
 
-      colRight.appendChild(editBtn);
       colRight.appendChild(delBtn);
       row.appendChild(colDate);
       row.appendChild(colDesc);
@@ -1055,7 +1118,7 @@
   document.getElementById('addAgendaBtn').addEventListener('click', addAgendaItem);
   wireComposeField(newAgendaInput, addAgendaItem);
 
-  /* ---------- HESAP / GELİR-GİDER MENÜSÜ ---------- */
+  /* HESAP */
   const calcOverlay = document.getElementById('calcOverlay');
   const calcListEl = document.getElementById('calcList');
   const calcTotalVal = document.getElementById('calcTotalVal');
@@ -1066,7 +1129,7 @@
     calcListEl.innerHTML = '';
     let total = 0;
     if(calcList.length === 0){
-      calcListEl.innerHTML = '<div class="empty-msg">Henüz hesap kaydı yok.<br>Aşağıdan harcama veya gelir ekleyin.</div>';
+      calcListEl.innerHTML = '<div class="empty-msg">Henüz hesap kaydı yok.</div>';
     } else {
       calcList.slice().reverse().forEach(item => {
         total += item.amount;
@@ -1080,7 +1143,6 @@
         const colDesc = document.createElement('div');
         colDesc.className = 'calc-col-desc';
         colDesc.textContent = item.desc;
-        colDesc.title = "Büyütmek / düzenlemek için dokunun";
         colDesc.addEventListener('click', () => openItemEditor('calc', item.id, '💳 Hesap · ' + (item.dateLabel || item.dateStr), true));
         
         const colRight = document.createElement('div');
@@ -1123,7 +1185,7 @@
   }
   document.getElementById('addCalcBtn').addEventListener('click', addCalcItem);
 
-  /* ---------- TAKVİM ---------- */
+  /* TAKVİM */
   function openCalendar(){ calViewYear = new Date(currentDate+'T00:00:00').getFullYear(); calViewMonth = new Date(currentDate+'T00:00:00').getMonth(); calendarOverlay.classList.remove('hidden'); renderCalendar(); }
   function closeCalendar(){ calendarOverlay.classList.add('hidden'); }
 
@@ -1158,62 +1220,7 @@
   document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); statsOverlay.classList.remove('hidden'); });
   document.getElementById('statsCloseBtn').addEventListener('click', () => statsOverlay.classList.add('hidden'));
 
-  /* ---------- VERİLERİM / RUTİN TAKİP ORANLARI ----------
-     Her rutin için, o rutini eklediğin günden bugüne kadar uygulanabildiği
-     gün sayısı ile kaç gün gerçekten tamamladığını (X / Y gün) hesaplar.
-     Örn: 30 gün önce eklenen "Spora git" rutini, 30 günün 10'unda
-     tamamlanmışsa "10/30" olarak gösterilir. Haftalık/aylık rutinlerde
-     yalnızca uygulanabildiği günler sayılır. */
-  async function computeRoutineStats(t){
-    const startStr = t.createdDate || todayStr();
-    const start = new Date(startStr + 'T00:00:00');
-    const end = new Date(todayStr() + 'T00:00:00');
-    if(isNaN(start.getTime()) || start > end) return {done:0, total:0};
-    let total = 0, done = 0;
-    let cur = new Date(start);
-    while(cur <= end){
-      if(taskAppliesToDate(t, cur)){
-        total++;
-        const rec = await loadRecord(fmt(cur));
-        if(rec && rec[t.id]) done++;
-      }
-      cur.setDate(cur.getDate() + 1);
-    }
-    return {done, total};
-  }
-
-  async function renderStats(){
-    if(templates.length === 0){
-      statsList.innerHTML = '<div class="empty-msg">Henüz rutin eklenmedi.</div>';
-      return;
-    }
-    statsList.innerHTML = '<div class="empty-msg">Hesaplanıyor...</div>';
-    const rows = [];
-    for(const t of templates){
-      const r = await computeRoutineStats(t);
-      rows.push({text: t.text, subtitle: recurrenceSuffix(t).replace(/^ · /,''), done: r.done, total: r.total});
-    }
-    rows.sort((a,b) => (b.total ? b.done/b.total : 0) - (a.total ? a.done/a.total : 0));
-    statsList.innerHTML = '';
-    rows.forEach(r => {
-      const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
-      const row = document.createElement('div'); row.className = 'stat-row-item';
-      const top = document.createElement('div'); top.className = 'stat-row-top';
-      const txt = document.createElement('div'); txt.className = 'stat-row-text';
-      txt.textContent = r.text + (r.subtitle ? ' · ' + r.subtitle : '');
-      const ratio = document.createElement('div'); ratio.className = 'stat-row-ratio';
-      ratio.textContent = `${r.done}/${r.total}  (%${pct})`;
-      top.appendChild(txt); top.appendChild(ratio);
-      const barbg = document.createElement('div'); barbg.className = 'stat-row-barbg';
-      const barfill = document.createElement('div'); barfill.className = 'stat-row-barfill';
-      barfill.style.width = pct + '%';
-      barbg.appendChild(barfill);
-      row.appendChild(top); row.appendChild(barbg);
-      statsList.appendChild(row);
-    });
-  }
-
-  /* ---------- SÜREKLİ NOTLAR ---------- */
+  /* SÜREKLİ NOTLAR */
   const notesOverlay = document.getElementById('notesOverlay');
   const notesList = document.getElementById('notesList');
   const newNoteInput = document.getElementById('newNoteInput');
@@ -1245,201 +1252,19 @@
   document.getElementById('addNoteBtn').addEventListener('click', addNote);
   wireComposeField(newNoteInput, addNote);
 
-  /* ---------- STANDART E-TABLO / EXCEL AKTARIMI ---------- */
-  document.getElementById('exportExcelBtn').addEventListener('click', () => {
-    let excelXML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>`;
-    
-    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Ajanda</x:Name><x:WorksheetSource HRef="#sheet0"/></x:ExcelWorksheet>`;
-    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Hesap</x:Name><x:WorksheetSource HRef="#sheet1"/></x:ExcelWorksheet>`;
-    excelXML += `<x:ExcelWorksheet><x:Name>Sürekli Notlar</x:Name><x:WorksheetSource HRef="#sheet2"/></x:ExcelWorksheet>`;
-    excelXML += `<x:ExcelWorksheet><x:Name>Rutinler ve Görevler</x:Name><x:WorksheetSource HRef="#sheet3"/></x:ExcelWorksheet>`;
-    
-    excelXML += `</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>`;
-    
-    // Tab 1: Ajanda
-    excelXML += `<table id="sheet0" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Ajanda Notları</th><th style="background:#132540;color:#fff;">Tutar</th></tr>`;
-    agendaList.forEach(a => {
-      excelXML += `<tr><td>${a.dateLabel || a.dateStr}</td><td>${a.text}</td><td></td></tr>`;
-    });
-    excelXML += `</table>`;
-
-    // Tab 2: Günlük Hesap
-    excelXML += `<table id="sheet1" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Açıklama</th><th style="background:#132540;color:#fff;">Tutar (TL)</th></tr>`;
-    calcList.forEach(c => {
-      excelXML += `<tr><td>${c.dateLabel || c.dateStr}</td><td>${c.desc}</td><td>${c.amount}</td></tr>`;
-    });
-    excelXML += `</table>`;
-
-    // Tab 3: Notlar
-    excelXML += `<table id="sheet2" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Not Metni</th><th style="background:#132540;color:#fff;">Durum</th></tr>`;
-    notes.forEach(n => { excelXML += `<tr><td>-</td><td>${n.text}</td><td>${n.done ? 'Tamamlandı' : 'Bekliyor'}</td></tr>`; });
-    excelXML += `</table>`;
-
-    // Tab 4: Şablon Görevler
-    excelXML += `<table id="sheet3" border="1"><tr><th style="background:#132540;color:#fff;">Başlangıç Tarihi</th><th style="background:#132540;color:#fff;">Görev Açıklaması</th><th style="background:#132540;color:#fff;">Tekrar Türü</th></tr>`;
-    templates.forEach(t => { excelXML += `<tr><td>${t.createdDate || '-'}</td><td>${t.text}</td><td>${t.type}</td></tr>`; });
-    excelXML += `</table></body></html>`;
-
-    const blob = new Blob([excelXML], {type: 'application/vnd.ms-excel'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `Gunluk-Gorevler-Verileri-${activeProfile}-${todayStr()}.xls`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-
-  document.getElementById('exportBtn').addEventListener('click', () => {
-    const backup = { profile: activeProfile, templates, stats, notes, agendaList, calcList, auto3Alarms, days: {}, customDays: {} };
-    const dayPrefix = scopedKeyPrefix() + 'day:';
-    const customPrefix = scopedKeyPrefix() + 'custom:';
-    for(let i=0; i<localStorage.length; i++){
-      const key = localStorage.key(i);
-      if(key && key.startsWith(dayPrefix)){ try{ backup.days[key.substring(dayPrefix.length)] = JSON.parse(localStorage.getItem(key)); }catch(e){} }
-      if(key && key.startsWith(customPrefix)){ try{ backup.customDays[key.substring(customPrefix.length)] = JSON.parse(localStorage.getItem(key)); }catch(e){} }
-    }
-    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `gunluk-gorevler-yedek-${activeProfile}-${todayStr()}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-
-  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
-  document.getElementById('importFile').addEventListener('change', (e) => {
-    const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try{
-        const data = JSON.parse(reader.result);
-        if(!await showConfirm('Mevcut veriler yedekteki verilerle değiştirilecek. Emin misin?')) return;
-        templates = data.templates || []; stats = data.stats || {}; notes = data.notes || [];
-        agendaList = data.agendaList || []; calcList = data.calcList || []; auto3Alarms = !!data.auto3Alarms;
-        await saveTemplates(); await saveStats(); await saveNotes(); await saveAgendaList(); await saveCalcList();
-        await safeSet('auto_3_alarms', auto3Alarms ? 'yes' : 'no');
-        alert('Yedek yüklendi.'); location.reload();
-      }catch(err){ alert('Geçersiz dosya.'); }
-    };
-    reader.readAsText(file); e.target.value = '';
-  });
-
-  /* ---------- ALARM SİSTEMİ ---------- */
-  document.getElementById('threeAlarmsToggle').addEventListener('change', async (e) => {
-    auto3Alarms = e.target.checked;
-    await safeSet('auto_3_alarms', auto3Alarms ? 'yes' : 'no');
-  });
-
-  const CUSTOM_SOUND_KEY = 'custom_alarm_sound';
-  let customSoundDataUrl = null; let audioCtx = null; let ringingInterval = null; let ringingAudioEl = null; let selectedSound = 'classic';
-
-  const alarmHour = document.getElementById('alarmHour');
-  const alarmMinute = document.getElementById('alarmMinute');
-  const alarmModal = document.getElementById('alarmModal');
-  const soundList = document.getElementById('soundList');
-  const customSoundLabel = document.getElementById('customSoundLabel');
-  const soundFileInput = document.getElementById('soundFile');
-  const ringingModal = document.getElementById('ringingModal');
-  const ringingTaskText = document.getElementById('ringingTaskText');
-
-  function getAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
-  function beep(freq, startTime, duration, type){
-    const ctxA = getAudioCtx(); const osc = ctxA.createOscillator(); const gain = ctxA.createGain();
-    osc.type = type || 'sine'; osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.0001, startTime); gain.gain.exponentialRampToValueAtTime(0.35, startTime+0.02); gain.gain.exponentialRampToValueAtTime(0.0001, startTime+duration);
-    osc.connect(gain); gain.connect(ctxA.destination); osc.start(startTime); osc.stop(startTime+duration+0.02);
-  }
-  function playPreset(id){
-    const ctxA = getAudioCtx(); const now = ctxA.currentTime;
-    if(id === 'classic'){ beep(880, now, 0.15,'sine'); beep(880, now+0.25, 0.15,'sine'); beep(1046, now+0.5, 0.25,'sine'); }
-    else if(id === 'soft'){ beep(523, now, 0.4,'sine'); beep(659, now+0.35, 0.5,'sine'); }
-    else if(id === 'urgent'){ for(let i=0;i<6;i++){ beep(1200, now+i*0.18, 0.1,'square'); } }
-  }
-
-  async function loadCustomSound(){ customSoundDataUrl = await safeGet(CUSTOM_SOUND_KEY); customSoundLabel.textContent = customSoundDataUrl ? '🎵 Yüklü Ses Kullanılıyor' : '🎵 Telefon Zil Sesi / MP3 Seç'; }
-  document.getElementById('uploadSoundBtn').addEventListener('click', () => soundFileInput.click());
-  soundFileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0]; if(!file) return;
-    if(file.size > 8*1024*1024){ alert('Ses dosyası 8MB altında olmalıdır.'); return; }
-    const reader = new FileReader();
-    reader.onload = async () => { customSoundDataUrl = reader.result; await safeSet(CUSTOM_SOUND_KEY, customSoundDataUrl); customSoundLabel.textContent = '🎵 Yüklü Ses Kullanılıyor'; selectSound('custom'); };
-    reader.readAsDataURL(file);
-  });
-
-  function selectSound(id){ selectedSound = id; Array.from(soundList.children).forEach(opt => { opt.classList.toggle('sel', opt.dataset.sound === id); const radio = opt.querySelector('input[type=radio]'); if(radio) radio.checked = (opt.dataset.sound === id); }); }
-  Array.from(soundList.children).forEach(opt => opt.addEventListener('click', (e) => { if(e.target.tagName !== 'BUTTON') selectSound(opt.dataset.sound); }));
-  Array.from(document.querySelectorAll('[data-preview]')).forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); playPreset(btn.dataset.preview); }));
-
-  let editingItem = null;
-  function findItemContainer(item){ if(item.kind === 'template') return templates.find(t => t.id === item.id); if(item.kind === 'note') return notes.find(n => n.id === item.id); return customTasks.find(c => c.id === item.id); }
-  async function persistItem(item){ if(item.kind === 'template') await saveTemplates(); else if(item.kind === 'note') await saveNotes(); else await saveCustom(currentDate, customTasks); }
-
-  function openAlarmEditor(item){ editingItem = item; const obj = findItemContainer(item); const alarm = obj && obj.alarm; document.getElementById('alarmSheetTitle').textContent = 'Alarm — ' + item.rawText; alarmHour.value = alarm ? alarm.hour : 8; alarmMinute.value = alarm ? alarm.minute : 0; selectSound(alarm ? alarm.soundId : 'classic'); document.getElementById('alarmRemoveBtn').style.display = alarm ? 'block' : 'none'; alarmModal.classList.remove('hidden'); }
-  function closeAlarmEditor(){ alarmModal.classList.add('hidden'); editingItem = null; }
-
-  document.getElementById('alarmCancelBtn').addEventListener('click', closeAlarmEditor);
-  document.getElementById('alarmSaveBtn').addEventListener('click', async () => {
-    if(!editingItem) return;
-    let h = parseInt(alarmHour.value,10), m = parseInt(alarmMinute.value,10);
-    if(isNaN(h) || h<0 || h>23 || isNaN(m) || m<0 || m>59){ alert('Geçerli bir saat girin.'); return; }
-    const obj = findItemContainer(editingItem); if(!obj) return;
-    obj.alarm = { hour:h, minute:m, soundId:selectedSound, enabled:true, lastRungDate:null };
-    await persistItem(editingItem); closeAlarmEditor(); renderList();
-  });
-  document.getElementById('alarmRemoveBtn').addEventListener('click', async () => { if(!editingItem) return; const obj = findItemContainer(editingItem); if(obj){ delete obj.alarm; await persistItem(editingItem); } closeAlarmEditor(); renderList(); });
-
-  let autoAlarmLastRung = {};
-  async function checkAlarms(){
-    if(!ringingModal.classList.contains('hidden')) return;
-    const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const todayS = todayStr();
-    if(auto3Alarms){
-      for(let idx=0; idx<autoAlarmTimes.length; idx++){
-        const targetH = autoAlarmTimes[idx].h, targetM = autoAlarmTimes[idx].m;
-        const key = `${todayS}_${idx}_${targetH}_${targetM}`;
-        if(h === targetH && m === targetM && !autoAlarmLastRung[key]){ autoAlarmLastRung[key] = true; triggerRing("Kontrol Zamanı! Görevlerini ve ajandanı kontrol et.", "classic", false); return; }
-      }
-    }
-    const nowMinutes = h*60 + m; const list = []; const dObj = new Date();
-    templates.filter(t => t.alarm && taskAppliesToDate(t, dObj)).forEach(t => list.push({text:t.text, alarm:t.alarm, obj:t, kind:'template'}));
-    if(currentDate === todayS){ customTasks.filter(c => c.alarm).forEach(c => list.push({text:c.text, alarm:c.alarm, obj:c, kind:'custom'})); }
-    for(const c of list){
-      if(c.alarm.enabled === false) continue;
-      const alarmMinutes = c.alarm.hour*60 + c.alarm.minute;
-      if(nowMinutes >= alarmMinutes && c.alarm.lastRungDate !== todayS){
-        c.obj.alarm.lastRungDate = todayS;
-        if(c.kind === 'template') await saveTemplates(); else await saveCustom(currentDate, customTasks);
-        triggerRing(c.text, c.alarm.soundId, nowMinutes > alarmMinutes); break;
-      }
-    }
-  }
-  setInterval(checkAlarms, 15000);
-
-  function triggerRing(text, soundId, missed){
-    document.querySelector('.ringing-modal .rtitle').textContent = missed ? '⏰ Kaçırdığın Hatırlatma' : 'Hatırlatma!';
-    ringingTaskText.textContent = text; ringingModal.classList.remove('hidden');
-    if(navigator.vibrate) navigator.vibrate([400,200,400,200,400]);
-    if(soundId === 'custom' && customSoundDataUrl){ ringingAudioEl = new Audio(customSoundDataUrl); ringingAudioEl.loop = true; ringingAudioEl.play().catch(()=>{}); }
-    else { playPreset(soundId); ringingInterval = setInterval(() => playPreset(soundId), 1400); }
-  }
-  function stopRing(){ ringingModal.classList.add('hidden'); if(ringingInterval){ clearInterval(ringingInterval); ringingInterval = null; } if(ringingAudioEl){ ringingAudioEl.pause(); ringingAudioEl = null; } }
-  document.getElementById('stopRingBtn').addEventListener('click', stopRing);
-
-  /* ---------- TEMA VEYA PROFİL ---------- */
-  const THEME_KEY = 'app_theme';
-  function applyTheme(id){ document.documentElement.setAttribute('data-theme', id); Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => btn.classList.toggle('sel', btn.dataset.theme === id)); }
-  async function loadTheme(){ applyTheme((await safeGet(THEME_KEY)) || 'dark'); }
-  Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => btn.addEventListener('click', async () => { applyTheme(btn.dataset.theme); await safeSet(THEME_KEY, btn.dataset.theme); }));
-
   function updateProfileUI(){ const p = PROFILES.find(x => x.id === activeProfile) || PROFILES[0]; document.getElementById('profileBtn').textContent = p.icon + ' ' + p.label; }
-  async function loadProfileData(){ await loadTemplates(); await loadNotes(); await loadAgendaList(); await loadCalcList(); await loadStats(); await loadAutoAlarmsState(); await loadAutoAlarmTimes(); await goToDate(todayStr()); }
   document.getElementById('profileBtn').addEventListener('click', async () => {
     activeProfile = PROFILES[(PROFILES.findIndex(p => p.id === activeProfile)+1) % PROFILES.length].id;
-    rawSet('active_profile', activeProfile); updateProfileUI(); await loadProfileData();
+    updateProfileUI();
+    listenToUserData();
   });
 
-  (async function init(){ await migrateToProfiles(); updateProfileUI(); await loadCustomSound(); await loadTheme(); await loadProfileData(); })();
+  (async function init(){
+    updateProfileUI();
+    initFirebaseAuth();
+  })();
 
-  if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
+  if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=3').catch(()=>{})); }
 })();
 </script>
 </body>
