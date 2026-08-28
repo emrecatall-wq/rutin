@@ -68,7 +68,10 @@
     font-family:-apple-system,BlinkMacSystemFont,Roboto,"Segoe UI",sans-serif; overflow:hidden;}
   #app{position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg); height:100vh; height:100dvh; width:100vw;}
 
-  /* AUTH OVERLAY — VARSAYILAN OLARAK GİZLİ (FLICKER ENGELLEYİCİ) */
+  /* İLK YÜKLEME EKRANI (OTURUM AÇILANA KADAR PERDELEME YAPAR) */
+  .splash-screen { position: fixed; inset: 0; background: var(--bg); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); font-size: 15px; font-weight: 600; }
+
+  /* AUTH OVERLAY — VARSAYILAN OLARAK GİZLİ */
   .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
   .auth-box { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
   .auth-box h2 { margin: 0 0 8px; text-align: center; color: var(--accent); font-size: 20px; }
@@ -273,6 +276,9 @@
 </head>
 <body>
 
+<!-- İLK AÇILIŞ PERDESİ (GÖZ KIRPMAYI ENGELLER) -->
+<div id="splashScreen" class="splash-screen">Yükleniyor...</div>
+
 <!-- GİRİŞ / KAYIT EKRANI -->
 <div id="authOverlay" class="auth-overlay">
   <div class="auth-box">
@@ -307,7 +313,7 @@
     </div>
   </header>
 
-  <main id="mainArea"><div class="loading">Yükleniyor...</div></main>
+  <main id="mainArea"></main>
 
   <footer id="footer" style="display:none;">
     <div class="add-mode-row" id="addModeRow">
@@ -503,6 +509,7 @@
   let isSignUpMode = false;
   let dbUnsubscribe = null;
 
+  const splashScreen = document.getElementById('splashScreen');
   const authOverlay = document.getElementById('authOverlay');
   const authTitle = document.getElementById('authTitle');
   const authEmail = document.getElementById('authEmail');
@@ -545,6 +552,7 @@
   });
 
   auth.onAuthStateChanged((user) => {
+    splashScreen.style.display = 'none'; // İlk kontrol bittiğinde yükleme perdesini kaldır
     if(user){
       currentUser = user;
       authOverlay.style.display = 'none';
