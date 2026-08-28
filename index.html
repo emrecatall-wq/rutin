@@ -68,10 +68,10 @@
     font-family:-apple-system,BlinkMacSystemFont,Roboto,"Segoe UI",sans-serif; overflow:hidden;}
   #app{position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg); height:100vh; height:100dvh; width:100vw;}
 
-  /* İLK YÜKLEME EKRANI (OTURUM AÇILANA KADAR PERDELEME YAPAR) */
+  /* AÇILIŞ PERDESİ */
   .splash-screen { position: fixed; inset: 0; background: var(--bg); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); font-size: 15px; font-weight: 600; }
 
-  /* AUTH OVERLAY — VARSAYILAN OLARAK GİZLİ */
+  /* AUTH OVERLAY */
   .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
   .auth-box { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
   .auth-box h2 { margin: 0 0 8px; text-align: center; color: var(--accent); font-size: 20px; }
@@ -117,11 +117,6 @@
     background:linear-gradient(90deg, var(--custom-dim) 0%, var(--bg2) 80%) !important;
   }
 
-  .row-alarm-btn{flex:0 0 auto; width:32px; height:32px; border-radius:8px; border:none;
-    background:transparent; color:var(--text-dim); font-size:16px; opacity:.5;
-    border-right:1px solid var(--line); margin-right:2px; padding-right:8px;}
-  .row-alarm-btn.is-active{opacity:1; color:var(--accent);}
-  .row-alarm-btn.is-empty{opacity:.25;}
   .check-btn{flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:2px solid var(--line);
     background:transparent; display:flex; align-items:center; justify-content:center; color:var(--done);
     font-size:16px; font-weight:bold;}
@@ -145,27 +140,7 @@
   .btn-save{background:var(--accent); color:#1a1005;}
   .btn-remove{background:var(--danger); color:#fff;}
   .btn-cancel{background:var(--line); color:var(--text);}
-  .time-row{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px;}
-  .time-row input{width:70px; background:var(--bg); border:1px solid var(--line); color:var(--text);
-    border-radius:10px; padding:12px; font-size:22px; text-align:center; outline:none;}
-  .time-row span{font-size:22px; color:var(--text-dim);}
-  .sound-list{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
-  .sound-opt{display:flex; align-items:center; gap:10px; background:var(--bg); border:1px solid var(--line);
-    border-radius:10px; padding:10px 12px;}
-  .sound-opt.sel{border-color:var(--accent); background:var(--accent-dim);}
-  .sound-opt input{margin:0;}
-  .sound-opt label{flex:1; font-size:14px;}
-  .sound-opt button{background:var(--line); border:none; color:var(--text); border-radius:8px; padding:6px 10px; font-size:12px;}
-
-  .ringing-modal{position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:18px; text-align:center; padding:20px;}
-  .ringing-modal.hidden{display:none;}
-  .ringing-modal .bell{font-size:60px; animation:ring 0.4s infinite;}
-  @keyframes ring{0%{transform:rotate(0);}25%{transform:rotate(15deg);}75%{transform:rotate(-15deg);}100%{transform:rotate(0);}}
-  .ringing-modal .rtitle{font-size:20px; font-weight:700; color:var(--accent);}
-  .ringing-modal .rtext{font-size:16px; color:var(--text);}
-  .ringing-modal button{background:var(--danger); color:#fff; border:none; border-radius:14px;
-    padding:16px 34px; font-size:16px; font-weight:700;}
+  
   .empty-msg{text-align:center; color:var(--text-dim); font-size:14px; margin-top:40px; padding:0 20px;}
 
   footer{flex:0 0 auto; background:var(--bg2); border-top:2px solid var(--line); padding:10px 12px;
@@ -215,9 +190,8 @@
   
   .backup-row{flex:0 0 auto; display:flex; flex-direction:column; gap:8px; padding:12px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
     border-top:1px solid var(--line);}
-  .backup-btn-group{display:flex; gap:8px;}
   .backup-btn{flex:1; background:var(--line); color:var(--text); border:none; border-radius:10px;
-    padding:12px 8px; font-size:13px; font-weight:600;}
+    padding:12px 8px; font-size:13px; font-weight:600; cursor:pointer;}
   .backup-btn.excel-btn{background:var(--done); color:#fff;}
   .backup-btn:active{background:var(--accent-dim);}
   
@@ -225,7 +199,7 @@
   .theme-section h4{margin:0 0 10px; font-size:14px; color:var(--text-dim); text-align:center;}
   .theme-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
   .theme-swatch{display:flex; align-items:center; gap:8px; border:2px solid var(--line); border-radius:10px;
-    padding:10px; background:var(--bg2);}
+    padding:10px; background:var(--bg2); cursor:pointer;}
   .theme-swatch.sel{border-color:var(--accent);}
   .theme-swatch .sw-dot{width:20px; height:20px; border-radius:50%; flex:0 0 auto; border:1px solid rgba(255,255,255,0.2);}
   .theme-swatch .sw-label{font-size:13px; color:var(--text);}
@@ -276,7 +250,7 @@
 </head>
 <body>
 
-<!-- İLK AÇILIŞ PERDESİ (GÖZ KIRPMAYI ENGELLER) -->
+<!-- İLK AÇILIŞ PERDESİ -->
 <div id="splashScreen" class="splash-screen">Yükleniyor...</div>
 
 <!-- GİRİŞ / KAYIT EKRANI -->
@@ -484,7 +458,7 @@
   </div>
 </div>
 
-<!-- FIREBASE SDK (COMPAT MODULES) -->
+<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -552,7 +526,7 @@
   });
 
   auth.onAuthStateChanged((user) => {
-    splashScreen.style.display = 'none'; // İlk kontrol bittiğinde yükleme perdesini kaldır
+    splashScreen.style.display = 'none';
     if(user){
       currentUser = user;
       authOverlay.style.display = 'none';
@@ -564,7 +538,7 @@
     }
   });
 
-  let cloudState = { templates: [], notes: [], agendaList: [], calcList: [], stats: {}, records: {}, customTasks: {} };
+  let cloudState = { templates: [], notes: [], agendaList: [], calcList: [], stats: {}, records: {}, customTasks: {}, theme: 'dark', alarmsEnabled: false, alarmTimes: ['08:00','15:00','22:00'] };
 
   function listenToUserData(){
     if(!currentUser) return;
@@ -581,6 +555,15 @@
           stats = profData.stats || {};
           cloudState.records = profData.records || {};
           cloudState.customTasks = profData.customTasks || {};
+          if(profData.theme) setTheme(profData.theme);
+          if(profData.alarmsEnabled !== undefined){
+            document.getElementById('threeAlarmsToggle').checked = profData.alarmsEnabled;
+          }
+          if(profData.alarmTimes){
+            document.getElementById('autoAlarmTime0').value = profData.alarmTimes[0] || '08:00';
+            document.getElementById('autoAlarmTime1').value = profData.alarmTimes[1] || '15:00';
+            document.getElementById('autoAlarmTime2').value = profData.alarmTimes[2] || '22:00';
+          }
           renderCurrentScreen();
         }
       } else {
@@ -593,6 +576,14 @@
     if(!currentUser) return;
     const userDocRef = db.collection("users").doc(currentUser.uid);
     const payload = {};
+    const alarmsEnabled = document.getElementById('threeAlarmsToggle').checked;
+    const alarmTimes = [
+      document.getElementById('autoAlarmTime0').value,
+      document.getElementById('autoAlarmTime1').value,
+      document.getElementById('autoAlarmTime2').value
+    ];
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+
     payload[activeProfile] = {
       templates,
       notes,
@@ -600,7 +591,10 @@
       calcList,
       stats,
       records: cloudState.records,
-      customTasks: cloudState.customTasks
+      customTasks: cloudState.customTasks,
+      theme: currentTheme,
+      alarmsEnabled,
+      alarmTimes
     };
     await userDocRef.set(payload, { merge: true });
   }
@@ -1159,6 +1153,76 @@
   document.getElementById('calCloseBtn').addEventListener('click', closeCalendar);
   document.getElementById('calPrevMonth').addEventListener('click', () => { calViewMonth--; if(calViewMonth<0){calViewMonth=11; calViewYear--;} renderCalendar(); });
   document.getElementById('calNextMonth').addEventListener('click', () => { calViewMonth++; if(calViewMonth>11){calViewMonth=0; calViewYear++;} renderCalendar(); });
+
+  /* VERİLERİM / İSTATİSTİK / TEMA / ALARMLAR */
+  function renderStats(){
+    statsList.innerHTML = '';
+    if(templates.length === 0){
+      statsList.innerHTML = '<div class="empty-msg">Henüz kayıtlı rutin yok.</div>';
+      return;
+    }
+    templates.forEach(t => {
+      const count = stats[t.id] || 0;
+      const row = document.createElement('div');
+      row.className = 'stat-row-item';
+      
+      const top = document.createElement('div');
+      top.className = 'stat-row-top';
+      
+      const txt = document.createElement('div');
+      txt.className = 'stat-row-text';
+      txt.textContent = t.text;
+      
+      const ratio = document.createElement('div');
+      ratio.className = 'stat-row-ratio';
+      ratio.textContent = count + ' defa';
+      
+      top.appendChild(txt); top.appendChild(ratio);
+      
+      const barBg = document.createElement('div');
+      barBg.className = 'stat-row-barbg';
+      const barFill = document.createElement('div');
+      barFill.className = 'stat-row-barfill';
+      barFill.style.width = Math.min(count * 5, 100) + '%';
+      
+      barBg.appendChild(barFill);
+      row.appendChild(top); row.appendChild(barBg);
+      statsList.appendChild(row);
+    });
+  }
+
+  function setTheme(tName){
+    document.documentElement.setAttribute('data-theme', tName);
+    Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => {
+      btn.classList.toggle('sel', btn.dataset.theme === tName);
+    });
+  }
+
+  Array.from(document.querySelectorAll('.theme-swatch')).forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const t = btn.dataset.theme;
+      setTheme(t);
+      await syncToCloud();
+    });
+  });
+
+  document.getElementById('threeAlarmsToggle').addEventListener('change', async () => { await syncToCloud(); });
+  ['autoAlarmTime0','autoAlarmTime1','autoAlarmTime2'].forEach(id => {
+    document.getElementById(id).addEventListener('change', async () => { await syncToCloud(); });
+  });
+
+  document.getElementById('exportExcelBtn').addEventListener('click', () => {
+    let csv = "Tür,Tarih/Etiket,Açıklama,Tutar/Durum\n";
+    agendaList.forEach(a => { csv += `Ajanda,${a.dateLabel || a.dateStr},"${a.text.replace(/"/g,'""')}",-\n`; });
+    calcList.forEach(c => { csv += `Hesap,${c.dateLabel || c.dateStr},"${c.desc.replace(/"/g,'""')}",${c.amount} TL\n`; });
+    notes.forEach(n => { csv += `Not,-,"${n.text.replace(/"/g,'""')}",${n.done ? 'Tamamlandı' : 'Bekliyor'}\n`; });
+    
+    const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `rutin_takip_yedek_${todayStr()}.csv`;
+    link.click();
+  });
 
   document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); statsOverlay.classList.remove('hidden'); });
   document.getElementById('statsCloseBtn').addEventListener('click', () => statsOverlay.classList.add('hidden'));
