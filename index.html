@@ -562,6 +562,7 @@
   let currentUser = null;
   let isSignUpMode = false;
   let dbUnsubscribe = null;
+  let authCheckTimer = null;
 
   const splashScreen = document.getElementById('splashScreen');
   const authOverlay = document.getElementById('authOverlay');
@@ -606,15 +607,20 @@
   });
 
   auth.onAuthStateChanged((user) => {
-    splashScreen.style.display = 'none';
+    if(authCheckTimer) clearTimeout(authCheckTimer);
+
     if(user){
       currentUser = user;
+      splashScreen.style.display = 'none';
       authOverlay.style.display = 'none';
       listenToUserData();
     } else {
-      currentUser = null;
-      authOverlay.style.display = 'flex';
-      if(dbUnsubscribe) dbUnsubscribe();
+      authCheckTimer = setTimeout(() => {
+        currentUser = null;
+        splashScreen.style.display = 'none';
+        authOverlay.style.display = 'flex';
+        if(dbUnsubscribe) dbUnsubscribe();
+      }, 600);
     }
   });
 
