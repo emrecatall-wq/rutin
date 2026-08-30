@@ -137,9 +137,23 @@
   .alarm-modal{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:80; display:flex;
     align-items:flex-end; justify-content:center;}
   .alarm-modal.hidden{display:none;}
+
+  /* Düzenleme modali açıldığında arka planın kararmasını önleyen kural */
+  #editRowModal {
+    background: transparent !important;
+  }
+
   .alarm-sheet{background:var(--bg2); width:100%; max-width:480px; border-radius:16px 16px 0 0;
     padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;
     position:relative; left:50%; transform:translateX(-50%); margin:0 auto; box-sizing:border-box;}
+  
+  /* Düzenleme kutusu şeffaf arka planda öne çıksın diye hafif bir gölge */
+  #editRowModal .alarm-sheet {
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    border: 1px solid var(--line);
+    border-bottom: none;
+  }
+
   .alarm-sheet h3{margin:0 0 12px; font-size:16px;}
   .alarm-actions{display:flex; gap:8px;}
   .alarm-actions button{flex:1; border:none; border-radius:10px; padding:12px 0; font-size:14px; font-weight:700;}
