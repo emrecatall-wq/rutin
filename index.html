@@ -138,7 +138,8 @@
     align-items:flex-end; justify-content:center;}
   .alarm-modal.hidden{display:none;}
   .alarm-sheet{background:var(--bg2); width:100%; max-width:480px; border-radius:16px 16px 0 0;
-    padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;}
+    padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;
+    position:relative; left:50%; transform:translateX(-50%); margin:0 auto; box-sizing:border-box;}
   .alarm-sheet h3{margin:0 0 12px; font-size:16px;}
   .alarm-actions{display:flex; gap:8px;}
   .alarm-actions button{flex:1; border:none; border-radius:10px; padding:12px 0; font-size:14px; font-weight:700;}
@@ -267,6 +268,28 @@
   .calc-val-badge{font-size:14px; font-weight:700; padding:4px 8px; border-radius:6px; white-space:nowrap;}
   .calc-val-badge.plus{color:#fff; background:var(--done);}
   .calc-val-badge.minus{color:#fff; background:var(--danger);}
+
+  /* DÜZENLEME MODALİ İÇİN FIX DÜZENLEMELERİ */
+  #editRowInput {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 80px;
+    max-height: 60vh;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 15px;
+    outline: none;
+    margin-bottom: 12px;
+    resize: none;
+    overflow-y: auto;
+    font-family: inherit;
+    line-height: 1.4;
+    word-break: break-word;
+  }
 
   @media(min-width:768px){
     #app, .alarm-sheet{max-width:720px; margin:0 auto; left:50%; transform:translateX(-50%);}
@@ -528,7 +551,7 @@
   <div id="editRowModal" class="alarm-modal hidden">
     <div class="alarm-sheet">
       <h3 id="editRowModalTitle">Düzenle</h3>
-      <textarea id="editRowInput" style="width:100%; min-height:80px; background:var(--bg); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:12px; font-size:15px; outline:none; margin-bottom:12px; resize:vertical; overflow-y:hidden; font-family:inherit; line-height:1.4;"></textarea>
+      <textarea id="editRowInput"></textarea>
       <div class="alarm-actions">
         <button class="btn-cancel" id="editRowCancelBtn">İptal</button>
         <button class="btn-remove" id="editRowDeleteBtn">Sil</button>
@@ -723,7 +746,8 @@
   function autoGrowFull(el){
     if(!el) return;
     el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
+    const maxHeight = Math.min(el.scrollHeight, window.innerHeight * 0.6);
+    el.style.height = maxHeight + 'px';
   }
   function wireComposeField(el, submitFn){
     if(!el) return;
