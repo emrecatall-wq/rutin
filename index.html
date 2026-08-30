@@ -147,7 +147,6 @@
     padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;
     position:relative; left:50%; transform:translateX(-50%); margin:0 auto; box-sizing:border-box;}
   
-  /* Düzenleme kutusu şeffaf arka planda öne çıksın diye hafif bir gölge */
   #editRowModal .alarm-sheet {
     box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
     border: 1px solid var(--line);
@@ -1401,43 +1400,48 @@
   document.getElementById('addNoteBtn').addEventListener('click', addNote);
   wireComposeField(newNoteInput, addNote);
 
-  /* EXCEL AKTARIMI */
+  /* EXCEL / CSV AKTARIMI */
+  function cleanCSVField(str){
+    if(str === null || str === undefined) return '""';
+    const cleanStr = String(str).replace(/"/g, '""');
+    return `"${cleanStr}"`;
+  }
+
   document.getElementById('exportExcelBtn').addEventListener('click', () => {
-    let excelXML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>`;
-    
-    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Ajanda</x:Name><x:WorksheetSource HRef="#sheet0"/></x:ExcelWorksheet>`;
-    excelXML += `<x:ExcelWorksheet><x:Name>Günlük Hesap</x:Name><x:WorksheetSource HRef="#sheet1"/></x:ExcelWorksheet>`;
-    excelXML += `<x:ExcelWorksheet><x:Name>Sürekli Notlar</x:Name><x:WorksheetSource HRef="#sheet2"/></x:ExcelWorksheet>`;
-    excelXML += `<x:ExcelWorksheet><x:Name>Rutinler ve Görevler</x:Name><x:WorksheetSource HRef="#sheet3"/></x:ExcelWorksheet>`;
-    
-    excelXML += `</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>`;
-    
-    excelXML += `<table id="sheet0" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Ajanda Notları</th><th style="background:#132540;color:#fff;">Tutar</th></tr>`;
+    let csvContent = "\uFEFF"; // UTF-8 BOM - Türkçe karakter uyumluluğu için
+
+    csvContent += "=== GÜNLÜK AJANDA ===\n";
+    csvContent += "Tarih;Not Metni\n";
     agendaList.forEach(a => {
-      excelXML += `<tr><td>${a.dateLabel || a.dateStr}</td><td>${a.text}</td><td></td></tr>`;
+      csvContent += `${cleanCSVField(a.dateLabel || a.dateStr)};${cleanCSVField(a.text)}\n`;
     });
-    excelXML += `</table>`;
 
-    excelXML += `<table id="sheet1" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Açıklama</th><th style="background:#132540;color:#fff;">Tutar (TL)</th></tr>`;
+    csvContent += "\n=== GÜNLÜK HESAP (GELİR-GİDER) ===\n";
+    csvContent += "Tarih;Açıklama;Tutar (TL)\n";
     calcList.forEach(c => {
-      excelXML += `<tr><td>${c.dateLabel || c.dateStr}</td><td>${c.desc}</td><td>${c.amount}</td></tr>`;
+      csvContent += `${cleanCSVField(c.dateLabel || c.dateStr)};${cleanCSVField(c.desc)};${c.amount}\n`;
     });
-    excelXML += `</table>`;
 
-    excelXML += `<table id="sheet2" border="1"><tr><th style="background:#132540;color:#fff;">Tarih</th><th style="background:#132540;color:#fff;">Not Metni</th><th style="background:#132540;color:#fff;">Durum</th></tr>`;
-    notes.forEach(n => { excelXML += `<tr><td>-</td><td>${n.text}</td><td>${n.done ? 'Tamamlandı' : 'Bekliyor'}</td></tr>`; });
-    excelXML += `</table>`;
+    csvContent += "\n=== SÜREKLİ NOTLAR ===\n";
+    csvContent += "Not Metni;Durum\n";
+    notes.forEach(n => {
+      csvContent += `${cleanCSVField(n.text)};${n.done ? 'Tamamlandı' : 'Bekliyor'}\n`;
+    });
 
-    excelXML += `<table id="sheet3" border="1"><tr><th style="background:#132540;color:#fff;">Başlangıç Tarihi</th><th style="background:#132540;color:#fff;">Görev Açıklaması</th><th style="background:#132540;color:#fff;">Tekrar Türü</th></tr>`;
-    templates.forEach(t => { excelXML += `<tr><td>${t.createdDate || '-'}</td><td>${t.text}</td><td>${t.type}</td></tr>`; });
-    excelXML += `</table></body></html>`;
+    csvContent += "\n=== RUTİNLER VE GÖREVLER ===\n";
+    csvContent += "Başlangıç Tarihi;Görev Açıklaması;Tekrar Türü\n";
+    templates.forEach(t => {
+      csvContent += `${cleanCSVField(t.createdDate || '-')};${cleanCSVField(t.text)};${cleanCSVField(t.type)}\n`;
+    });
 
-    const blob = new Blob([excelXML], {type: 'application/vnd.ms-excel'});
+    const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `Gunluk-Gorevler-Verileri-${activeProfile}-${todayStr()}.xls`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    a.href = url;
+    a.download = `Gunluk-Gorevler-Verileri-${activeProfile}-${todayStr()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
 
